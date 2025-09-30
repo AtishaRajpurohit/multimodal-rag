@@ -1,88 +1,255 @@
+#!/usr/bin/env python3
+"""
+Multimodal RAG - Facial Recognition Pipeline
 
-# %% [markdown]
-# # Image Matching with CLIP and BLIP
-# This notebook demonstrates image matching using CLIP embeddings
+This is the main entry point for the facial recognition and embedding system.
+It processes all images in the query_images directory, converts them to OpenCV format,
+extracts face embeddings using DeepFace (RetinaFace + ArcFace), and uploads them
+to a Qdrant vector database for similarity search and facial recognition.
+"""
 
-# %%
-# Importing Libraries
-import clip
-import torch
-from transformers import BlipProcessor, BlipForConditionalGeneration
 import os
-from PIL import Image
+import sys
+import argparse
+import logging
+from datetime import datetime
+from typing import Optional, List
+
+# Add src to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
+from facial_detection import FacialDetectionSystem
+from image_converter import process_directory_images, get_image_info
+
+# Set up logging (only if not already configured)
+if not logging.getLogger().handlers:
+    # Create log file handler
+    log_file = 'facial_recognition_pipeline.log'
+    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler.setLevel(logging.INFO)
+    
+    # Create console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s:%(name)s:%(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # Configure root logger
+    logging.basicConfig(
+        level=logging.INFO,
+        handlers=[console_handler, file_handler]
+    )
+    
+    # Test log file creation
+    test_logger = logging.getLogger('test')
+    test_logger.info("Log file initialized successfully")
+
+logger = logging.getLogger(__name__)
+
+# Reduce verbosity of third-party libraries but keep warnings visible
+logging.getLogger('deepface').setLevel(logging.WARNING)  # Keep warnings visible for debugging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.getLogger('PIL').setLevel(logging.ERROR)
+logging.getLogger('image_converter').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('requests').setLevel(logging.ERROR)
+
+# Suppress TensorFlow and CUDA warnings
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
 
-# %%
-# Loading the models
-device = "cuda" if torch.cuda.is_available() else "cpu"
-'''
-Loading CLIP - Downloading the 'ViT-B/32' version of Vision Transformer Base with 32x32 patch size
-Returns a tuple of model and preprocess
-'''
-model, preprocess = clip.load("ViT-B/32", device=device)
-'''Loading BLIP - Loading the Bootstrapping Language Image Pre-training model
-'''
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
+class FacialRecognitionPipeline:
+    """Main pipeline class that orchestrates the entire facial recognition process."""
+    
+    def __init__(self, 
+                 qdrant_url: str = "http://localhost:6333",
+                 collection_name: str = "detected_faces_collection",
+                 model_name: str = "ArcFace",
+                 detector_backend: str = "retinaface"):
+        """Initialize the facial recognition pipeline."""
+        self.qdrant_url = qdrant_url
+        self.collection_name = collection_name
+        self.model_name = model_name
+        self.detector_backend = detector_backend
+        self.facial_system = None
+        
+        logger.info(f"Initialized Facial Recognition Pipeline")
+        logger.info(f"  - Qdrant URL: {qdrant_url}")
+        logger.info(f"  - Collection: {collection_name}")
+        logger.info(f"  - Model: {model_name}")
+        logger.info(f"  - Detector: {detector_backend}")
+    
+    def initialize_system(self) -> bool:
+        """Initialize the facial detection system and verify connections."""
+        try:
+            logger.info("🔧 Initializing facial detection system...")
+            
+            self.facial_system = FacialDetectionSystem(
+                qdrant_url=self.qdrant_url,
+                collection_name=self.collection_name,
+                model_name=self.model_name,
+                detector_backend=self.detector_backend
+            )
+            
+            logger.info("✅ Facial detection system initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize facial detection system: {str(e)}")
+            return False
+    
+    def process_directory(self, directory_path: str, 
+                         file_extensions: Optional[List[str]] = None) -> dict:
+        """Process all images in a directory through the complete pipeline."""
+        try:
+            if not os.path.exists(directory_path):
+                logger.error(f"❌ Directory not found: {directory_path}")
+                return {"success": False, "error": "Directory not found"}
+            
+            logger.info(f"📁 Processing directory: {directory_path}")
+            
+            # Use the integrated pipeline
+            results = self.facial_system.process_directory_integrated(
+                directory_path, 
+                file_extensions
+            )
+            
+            # Log detailed results
+            self._log_processing_results(results)
+            return results
+            
+        except Exception as e:
+            logger.error(f"❌ Error processing directory: {str(e)}")
+            return {"success": False, "error": str(e)}
+    
+    def _log_processing_results(self, results: dict):
+        """Log detailed processing results."""
+        try:
+            summary = results.get("summary", {})
+            
+            logger.info("=" * 60)
+            logger.info("📊 PROCESSING RESULTS SUMMARY")
+            logger.info("=" * 60)
+            logger.info(f"📁 Total images found: {summary.get('total_images_found', 0)}")
+            logger.info(f"✅ Images converted: {summary.get('images_converted', 0)}")
+            logger.info(f"👤 Images with faces: {summary.get('images_with_faces', 0)}")
+            logger.info(f"🎭 Total faces detected: {summary.get('total_faces_detected', 0)}")
+            logger.info(f"❌ Conversion failures: {summary.get('conversion_failures', 0)}")
+            logger.info(f"❌ Facial detection failures: {summary.get('facial_detection_failures', 0)}")
+            logger.info("=" * 60)
+            
+        except Exception as e:
+            logger.error(f"Error logging results: {str(e)}")
 
 
-# %%
-# Processing Reference Images
-reference_embeddings = []
-reference_names = []
-ref_dir = "ref_images"
+def main():
+    """Main entry point for the facial recognition pipeline."""
+    parser = argparse.ArgumentParser(
+        description="Facial Recognition Pipeline - Process images and extract face embeddings"
+    )
+    
+    parser.add_argument(
+        "--directory", "-d",
+        type=str,
+        default="data/query_images",
+        help="Directory containing images to process (default: data/query_images)"
+    )
+    
+    parser.add_argument(
+        "--collection", "-c",
+        type=str,
+        default="detected_faces_collection",
+        help="Qdrant collection name (default: detected_faces_collection)"
+    )
+    
+    parser.add_argument(
+        "--qdrant-url",
+        type=str,
+        default="http://localhost:6333",
+        help="Qdrant server URL (default: http://localhost:6333)"
+    )
+    
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="ArcFace",
+        choices=["ArcFace", "Facenet", "Facenet512", "VGG-Face", "OpenFace", "DeepFace", "DeepID", "Dlib"],
+        help="DeepFace embedding model (default: ArcFace)"
+    )
+    
+    parser.add_argument(
+        "--detector",
+        type=str,
+        default="retinaface",
+        choices=["retinaface", "mtcnn", "opencv", "ssd", "dlib"],
+        help="Face detector backend (default: retinaface)"
+    )
+    
+    parser.add_argument(
+        "--extensions",
+        nargs="+",
+        default=[".jpg", ".jpeg", ".png", ".heic", ".heif", ".bmp", ".tiff", ".tif", ".webp"],
+        help="File extensions to process"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+    
+    args = parser.parse_args()
+    
+    # Set logging level
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    # Log start time
+    start_time = datetime.now()
+    logger.info("🚀 Starting Facial Recognition Pipeline")
+    logger.info(f"⏰ Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    try:
+        # Initialize pipeline
+        pipeline = FacialRecognitionPipeline(
+            qdrant_url=args.qdrant_url,
+            collection_name=args.collection,
+            model_name=args.model,
+            detector_backend=args.detector
+        )
+        
+        # Initialize system
+        if not pipeline.initialize_system():
+            logger.error("❌ Failed to initialize pipeline")
+            sys.exit(1)
+        
+        # Process directory
+        results = pipeline.process_directory(args.directory, args.extensions)
+        if not results.get("success", False):
+            logger.error("❌ Pipeline processing failed")
+            sys.exit(1)
+        
+        # Calculate processing time
+        end_time = datetime.now()
+        processing_time = end_time - start_time
+        logger.info(f"⏰ Processing completed in: {processing_time}")
+        logger.info("🎉 Facial Recognition Pipeline completed successfully!")
+        
+        # Show log file location for debugging
+        logger.info(f"📝 Detailed logs saved to: facial_recognition_pipeline.log")
+        
+    except KeyboardInterrupt:
+        logger.info("⚠️  Pipeline interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"❌ Pipeline failed with error: {str(e)}")
+        sys.exit(1)
 
-# Check if directory exists
-if not os.path.exists(ref_dir):
-    print(f"Error: Directory '{ref_dir}' not found!")
-    exit(1)
 
-for file in os.listdir(ref_dir):
-    if file.lower().endswith(('.jpg', '.jpeg', '.png')):
-        #Preprocessing every image
-        img = preprocess(Image.open(os.path.join(ref_dir,file))).unsqueeze(0).to(device)
-        with torch.no_grad():
-            emb = model.encode_image(img)
-        reference_embeddings.append(emb)
-        reference_names.append(file)
-
-reference_embeddings = torch.cat(reference_embeddings)
-#Standardising Embeddings - Is it needed ? 
-# reference_embeddings = reference_embeddings / reference_embeddings.norm(dim=-1, keepdim=True)
-print(f"Embedded {len(reference_names)} reference images")
-print(reference_embeddings.shape)
-print(f"Embedding dimension: {reference_embeddings.shape[1]}")
-
-# %%
-# Encoding Query Image and Finding Similar Images
-query_dir = "query_images"
-query_file = "IMG_2747.JPG"  # Your query image
-
-# Check if query image exists
-query_path = os.path.join(query_dir, query_file)
-if not os.path.exists(query_path):
-    print(f"Error: Query image '{query_path}' not found!")
-    exit(1)
-
-# Process query image
-print(f"Processing query image: {query_file}")
-query_img = preprocess(Image.open(query_path)).unsqueeze(0).to(device)
-
-with torch.no_grad():
-    query_embedding = model.encode_image(query_img)
-
-# Calculate similarities
-similarities = torch.cosine_similarity(query_embedding, reference_embeddings, dim=1)
-similarities = similarities.cpu().numpy()
-
-# Find best matches
-best_match_idx = similarities.argmax()
-best_similarity = similarities[best_match_idx]
-
-print(f"\nBest match: {reference_names[best_match_idx]}")
-print(f"Similarity score: {best_similarity:.4f}")
-
-# Show all similarities
-print("\nAll similarities:")
-for i, (name, sim) in enumerate(zip(reference_names, similarities)):
-    print(f"{name}: {sim:.4f}") 
+if __name__ == "__main__":
+    main()

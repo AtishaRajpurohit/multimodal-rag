@@ -441,3 +441,4 @@ if __name__ == "__main__":
     else:
         logger.info("Usage: python image_converter.py <image_path>")
         logger.info("Example: python image_converter.py /path/to/image.jpg")
+

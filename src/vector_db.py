@@ -47,3 +47,6 @@ if __name__ == "__main__":
     # vector_db.delete_collection(collection_name="test")
     # exists = vector_db.collection_exists(collection_name="test")
     # logger.info(f"Collection exists: {exists}")
+
+
+    '''For tomorrow, update the database to qdrant for detected faces. Make the reference collection!'''

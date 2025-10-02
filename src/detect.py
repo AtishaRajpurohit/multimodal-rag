@@ -112,6 +112,6 @@ if __name__ == "__main__":
 
     #Facial detection
     results = detector.perform_facial_detection()
-    # logger.info(f"Results : {results}")
-    # logger.info(f"Number of faces detected: {len(results)}")
-    # logger.info(f"Dimensions of the face crop: {results[0]['face_crop'].shape}")
+   
+
+'''Code works!'''

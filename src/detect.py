@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     #Facial detection
     results = detector.perform_facial_detection()
+    print([key for key in results[0].keys()])
 
    
 

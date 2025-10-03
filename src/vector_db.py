@@ -44,16 +44,38 @@ class VectorDB:
         self.client.delete_collection(collection_name=collection_name)
         logger.info(f" [5] Collection {collection_name} deleted successfully")
 
+    def upload_to_qdrant(
+        self,
+        collection_name: str,
+        detected_faces_list : List[Dict],
+        #NEED TO FIX : How to make the path asked once?
+        image_path: str,
+        distance:str = "Cosine",
+        vector_size:int = 512
+        ):
 
-    def upload_to_qdrant(self, collection_name: str, points = List[models.PointStruct]):
         if not self.collection_exists(collection_name):
-            raise ValueError(f"Collection {collection_name} does not exist")
+            #Without self, Python is looking for a standalone function, which doesnt exist. The function exists inside the class.
+            self.create_collection(collection_name,vector_size,distance)
+
+        #Convert results to points
+        points = []
+        for face_id, face_data in enumerate(detected_faces_list,start=1):
+            point = models.PointStruct(
+                id=face_id,
+                vector=face_data["embedding"],
+                payload={
+                    "face_data" : face_data["face_crop"],
+                    "image_path" : image_path
+                }
+            )
+            points.append(point)
+        # PointStruct(id=product_id_1, vector=updated_vector_1, payload=new_payload_1),
+
         self.client.upsert(collection_name=collection_name, points=points)
         logger.info(f" [6] {len(points)} points uploaded to collection {collection_name}")
 
 
-        
-        
 
 if __name__ == "__main__":
     vector_db = VectorDB()
@@ -61,6 +83,5 @@ if __name__ == "__main__":
     # vector_db.delete_collection(collection_name="test")
     # exists = vector_db.collection_exists(collection_name="test")
     # logger.info(f"Collection exists: {exists}")
-
 
     '''For tomorrow, update the database to qdrant for detected faces. Make the reference collection!'''

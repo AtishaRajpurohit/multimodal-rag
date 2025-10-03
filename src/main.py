@@ -37,6 +37,8 @@ if __name__ == "__main__":
 
     #Uploading to Qdrant
     vector_db = VectorDB()
-    vector_db.upload_to_qdrant(results)
 
-    logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboar")
+    logger.info(f"Uploading faces to Qdrant")
+    vector_db.upload_to_qdrant(collection_name="detected_faces_collection", detected_faces_list=results, image_path=image_path)
+
+    logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")

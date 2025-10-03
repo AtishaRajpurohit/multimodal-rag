@@ -98,23 +98,30 @@ class Facial_Detection:
             })
 
         return output
+
+        
         logger.info(f"[7] Extracted {len(output)} faces from {self.image_path}")
         logger.info(f"[8] Dimensions of the face crop embeddings: {len(output[0]['embedding'])}")
+
+
+    
 
 
 
 if __name__ == "__main__":
     image_path = "data/query_images/IMG_2237.HEIC"
 
-    #Creating an instance
+    # #Creating an instance
     detector = Facial_Detection(image_path)
 
     #Preprocessing
     processed_image = detector.preprocess_image(resize=(512, 512))
 
-    #Facial detection
+    # #Facial detection
     results = detector.perform_facial_detection()
     print([key for key in results[0].keys()])
+    
+
 
    
 

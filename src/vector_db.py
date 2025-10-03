@@ -1,6 +1,8 @@
 import os
 from qdrant_client import QdrantClient, models
 from loguru import logger
+#What aret these? 
+from typing import List, Dict
 
 class VectorDB:
     '''
@@ -20,6 +22,7 @@ class VectorDB:
         if not isinstance(vector_size, int):
             raise ValueError("Vector size must be an integer")  
         
+        #Check if distance is valid
         valid_distances = ["Cosine", "Euclidean", "Dot"]
         if distance not in valid_distances:
             raise ValueError(f"Invalid distance: {distance}. Must be one of: {valid_distances}")
@@ -40,6 +43,17 @@ class VectorDB:
             raise ValueError(f"Collection {collection_name} does not exist")
         self.client.delete_collection(collection_name=collection_name)
         logger.info(f" [5] Collection {collection_name} deleted successfully")
+
+
+    def upload_to_qdrant(self, collection_name: str, points = List[models.PointStruct]):
+        if not self.collection_exists(collection_name):
+            raise ValueError(f"Collection {collection_name} does not exist")
+        self.client.upsert(collection_name=collection_name, points=points)
+        logger.info(f" [6] {len(points)} points uploaded to collection {collection_name}")
+
+
+        
+        
 
 if __name__ == "__main__":
     vector_db = VectorDB()

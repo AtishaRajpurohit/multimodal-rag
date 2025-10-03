@@ -96,6 +96,8 @@ class Facial_Detection:
                 "embedding": embedding,
                 "face_crop": face_crop
             })
+
+        return output
         logger.info(f"[7] Extracted {len(output)} faces from {self.image_path}")
         logger.info(f"[8] Dimensions of the face crop embeddings: {len(output[0]['embedding'])}")
 
@@ -112,6 +114,7 @@ if __name__ == "__main__":
 
     #Facial detection
     results = detector.perform_facial_detection()
+
    
 
 '''Code works!'''

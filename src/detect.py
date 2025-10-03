@@ -104,9 +104,6 @@ class Facial_Detection:
         logger.info(f"[8] Dimensions of the face crop embeddings: {len(output[0]['embedding'])}")
 
 
-    
-
-
 
 if __name__ == "__main__":
     image_path = "data/query_images/IMG_2237.HEIC"

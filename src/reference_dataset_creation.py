@@ -20,6 +20,7 @@ class Reference_Dataset_Creation:
     def __init__(self,input_image_path: str,output_image_path: str):
         self.input_image_path = input_image_path
         self.output_image_path = output_image_path
+
         #Checking for input image path
         logger.info(f"[1] Checking for input image path: {self.input_image_path}")
         if not os.path.exists(self.input_image_path):
@@ -36,7 +37,7 @@ class Reference_Dataset_Creation:
             raise TypeError(f"Output Image path must be a string, current type: {type(self.output_image_path)}")
         logger.info(f"[4] {self.output_image_path} is valid")
 
-    def extract_detected_faces(self):
+    def extract_detected_faces_and_save_as_jpg(self):
         '''
         Extracts the detected faces and stores the cropped images in a jpg format in the output image path.
         '''
@@ -57,9 +58,11 @@ class Reference_Dataset_Creation:
             cv2.imwrite(f"{self.output_image_path}/face_{i+1}_{self.input_image_path.split('/')[-1]}.jpg", cropped_face_bgr)
         logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
 
+
 #Test the code!    
 if __name__ == "__main__":
-    input_image_path = "data/query_images/IMG_2237.HEIC"
-    output_image_path = "data/reference_images"
+    input_image_path =["data/ref_images/IMG_2872.HEIC","data/ref_images/FullSizeRender.HEIC"]
+
+    output_image_path = "data/reference_images_faces"
     reference_dataset_creation = Reference_Dataset_Creation(input_image_path,output_image_path)
-    reference_dataset_creation.extract_detected_faces()
+    reference_dataset_creation.extract_detected_faces_and_save_as_jpg()

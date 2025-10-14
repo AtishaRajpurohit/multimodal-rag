@@ -44,7 +44,7 @@ class VectorDB:
         self.client.delete_collection(collection_name=collection_name)
         logger.info(f" [5] Collection {collection_name} deleted successfully")
 
-    def upload_to_qdrant(
+    def upload_detected_faces_to_qdrant(
         self,
         collection_name: str,
         detected_faces_list : List[Dict],
@@ -74,6 +74,7 @@ class VectorDB:
 
         self.client.upsert(collection_name=collection_name, points=points)
         logger.info(f" [6] {len(points)} points uploaded to collection {collection_name}")
+
 
 
 

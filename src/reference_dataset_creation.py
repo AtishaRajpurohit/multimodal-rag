@@ -62,7 +62,8 @@ class Reference_Dataset_Creation:
 #Test the code!    
 if __name__ == "__main__":
     input_image_path =["data/ref_images/IMG_2872.HEIC","data/ref_images/FullSizeRender.HEIC"]
+    for input_image_path in input_image_path:
 
-    output_image_path = "data/reference_images_faces"
-    reference_dataset_creation = Reference_Dataset_Creation(input_image_path,output_image_path)
-    reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
+        output_image_path = "data/reference_images_faces"
+        reference_dataset_creation = Reference_Dataset_Creation(input_image_path,output_image_path)
+        reference_dataset_creation.extract_detected_faces_and_save_as_jpg()

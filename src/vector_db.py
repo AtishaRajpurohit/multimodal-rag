@@ -47,26 +47,31 @@ class VectorDB:
     def upload_detected_faces_to_qdrant(
         self,
         collection_name: str,
+        #Params without defaults need to come before params with defaults!
         detected_faces_list : List[Dict],
+        labels: List[str],
         #NEED TO FIX : How to make the path asked once?
         image_path: str,
         distance:str = "Cosine",
-        vector_size:int = 512
+        vector_size:int = 512,
         ):
 
         if not self.collection_exists(collection_name):
             #Without self, Python is looking for a standalone function, which doesnt exist. The function exists inside the class.
             self.create_collection(collection_name,vector_size,distance)
 
+        #ADD LABEL VALDATION!
+
         #Convert results to points
         points = []
-        for face_id, face_data in enumerate(detected_faces_list,start=1):
+        for face_id, (face_data,label,image_path) in enumerate(zip(detected_faces_list,labels,image_path),start=1):
             point = models.PointStruct(
                 id=face_id,
                 vector=face_data["embedding"],
                 payload={
                     "face_data" : face_data["face_crop"],
-                    "image_path" : image_path
+                    "image_path" : image_path,
+                    "label" : label
                 }
             )
             points.append(point)
@@ -76,7 +81,7 @@ class VectorDB:
         logger.info(f" [6] {len(points)} points uploaded to collection {collection_name}")
 
 
-
+#Rethink reference uploading!! Since each image will be passed from the reference collection, their names should be stored like that. So maybe it needs to be passed in the function directly.
 
 if __name__ == "__main__":
     vector_db = VectorDB()

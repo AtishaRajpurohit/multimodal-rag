@@ -44,3 +44,4 @@ if __name__ == "__main__":
     logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")
 
     # vector_db.delete_collection(collection_name="detected_faces_collection")
+    

@@ -90,4 +90,8 @@ if __name__ == "__main__":
     # exists = vector_db.collection_exists(collection_name="test")
     # logger.info(f"Collection exists: {exists}")
 
-    '''For tomorrow, update the database to qdrant for detected faces. Make the reference collection!'''
+'''For tomorrow :
+1. Update the reference function and add labels to the reference faces. 
+2. Perform a match for those faces.
+3. Upload the images overall embedding to Qdrant, along with EXIF data.
+'''

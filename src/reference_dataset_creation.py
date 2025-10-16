@@ -16,9 +16,6 @@ register_heif_opener()
 from detect import Facial_Detection
 from vector_db import VectorDB
 
-#Keeping this outside the class since the class needs to be called.
-#It is a standalone function, and not a method.
-
 
 class Reference_Dataset_Creation:
     '''
@@ -175,34 +172,8 @@ if __name__ == "__main__":
 
     logger.info("FINAL : Code works!")
 
+'''For tomorrow : Make the reusability better, so reference dataset creation can be used for other images as well.'''
 
-
-
-
-# if __name__ == "__main__":
-#     """
-#     Test pipeline for one .HEIC image.
-#     1. Detects and saves cropped faces.
-#     2. After verifying the crops, assigns labels.
-#     3. Embeds and uploads to Qdrant.
-#     """
-
-#     input_image_path = "data/query_images/IMG_8916.HEIC"
-#     output_image_path = "data/reference_images_faces"
-#     collection_name = "reference_dataset_collection"
-
-#     # Step 1: Extract and save cropped faces
-#     logger.info(f"Processing image: {input_image_path}")
-#     reference_dataset = Reference_Dataset_Creation(input_image_path, output_image_path)
-#     reference_dataset.extract_detected_faces_and_save_as_jpg()
-#     logger.info("Cropped faces saved successfully. Review and prepare labels.")
-
-#     # Step 2: Your verified labels for the detected faces
-#     labels = ["Raghav", "Sonali", "Vinayak", "Tala", "Avi", "Olivier", "Atisha", "Matene"]
-
-#     # Step 3: Embed and upload to Qdrant
-#     reference_dataset.embed_upload_to_qdrant(collection_name, labels)
-#     logger.info("All faces embedded and uploaded to Qdrant successfully.")
 
 
 

@@ -128,5 +128,5 @@ if __name__ == "__main__":
     
     result = capture_images_from_webcam()
 
-    search_similar_faces(result[0]["embedding"], collection_name="ref_image_test1", top_k=1)
+    search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
     logger.info("Pipeline completed successfully! :) Log off!!!")

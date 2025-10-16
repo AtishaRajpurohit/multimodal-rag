@@ -98,7 +98,7 @@ def get_face_embedding(image_path: str):
         return None
 
 #Step 5 - Perform Vector Matching
-def search_similar_faces(query_embedding, collection_name="face_embeddings", top_k=1):
+def search_similar_faces(query_embedding, collection_name, top_k=1):
     client = QdrantClient("http://localhost:6333")
     try:
         search_results = client.search(
@@ -130,3 +130,9 @@ if __name__ == "__main__":
 
     search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
     logger.info("Pipeline completed successfully! :) Log off!!!")
+
+    '''For tomorrow :
+    So far we are able to search and get the names.
+    1. Return the search results as a list of dictionaries with the keys: id, label, score.
+    2. Multimodal Embedding for the user-clicked photo.
+    3. Supply the search results, along with the multimodal embedding to the LLM.

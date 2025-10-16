@@ -66,21 +66,21 @@ class Facial_Detection:
             image = cv2.imread(image_path)
             if image is None:
                 raise ValueError(f"OpenCV failed to read image: {image_path}")
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #Converts BGR to RGB
             if resize:
                 image = cv2.resize(image, resize)
-            return image
+            return image #RGB
         
         #Converting to HEIC formats.        
         else:
-            pil_image = Image.open(image_path).convert(convert_to).resize(resize)
+            pil_image = Image.open(image_path).convert(convert_to).resize(resize) #RGB
             if resize:
                 pil_image = pil_image.resize(resize)
             image = np.array(pil_image)
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR) #BGR
             logger.info(f"[4] Converted HEIC image: {image_path}")
         # LEARNING : Since image needs to be used just for this function, and not anytime for this class. Just use it ias a temp variable.
-        return image
+        return image #BGR
             
     # To be applied to query image in camera_image_matching.py        
     def facial_detection_embedding(

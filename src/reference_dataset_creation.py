@@ -16,6 +16,9 @@ register_heif_opener()
 from detect import Facial_Detection
 from vector_db import VectorDB
 
+#Keeping this outside the class since the class needs to be called.
+#It is a standalone function, and not a method.
+
 
 class Reference_Dataset_Creation:
     '''
@@ -99,21 +102,108 @@ class Reference_Dataset_Creation:
         image_path=self.input_image_path,
         labels=labels
         )
+
+    # def reference_dataset_creation_main(
+    #     self,
+    #     input_image_path: str,
+    #     output_image_path: str,
+    #     collection_name: str,
+    #     labels: List[str]
+    #     ):
+
+    #     #Creating a reference dataset instance
+    #     reference_dataset = Reference_Dataset_Creation(input_image_path, output_image_path)
+
+    #     #Detecting faces and storing the cropped faces as .jpg files
+    #     reference_dataset.extract_detected_faces_and_save_as_jpg()
+    #     logger.info(f"[Reference Dataset Creation] Creating a collection and uploading the faces to Qdrant...")
+
+    #     #Embedding the faces and uploading them to Qdrant, along with the labels
+    #     reference_dataset.embed_upload_to_qdrant(collection_name, labels)
+    #     logger.info("[Reference Dataset Creation] Reference dataset creation completed successfully. Check http://localhost:6333/dashboard")
+
+        
+
         
 #Test the code!    
 if __name__ == "__main__":
+    """
+    STEP 1: RUN FACE CROPPING
+    -------------------------
+    Detects and saves cropped faces for each image in input_image_paths.
+    After this step, review the cropped faces and prepare one label list per image.
+    """
 
-    input_image_path = "data/query_images/IMG_8916.HEIC"
+    input_image_paths = [
+        "data/query_images/IMG_8916.HEIC",
+        "data/query_images/query.JPG"
+    ]
+
     output_image_path = "data/reference_images_faces"
-
-    reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
-    reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
-    logger.info(f"[A] Creating a collection and uploading the faces to Qdrant...")
-    
-    #Uploading the reference images along with labels.
     collection_name = "reference_dataset_collection"
-    labels = ["Raghav","Sonali","Vinayak","Tala","Avi","Olivier","Atisha","Matene"]
-    reference_dataset_creation.embed_upload_to_qdrant(collection_name, labels)
+
+    # Step 1: Crop and save faces
+    for input_image_path in input_image_paths:
+        logger.info(f"Processing image for cropping: {input_image_path}")
+        reference_dataset = Reference_Dataset_Creation(input_image_path, output_image_path)
+        reference_dataset.extract_detected_faces_and_save_as_jpg()
+
+    logger.info("All faces extracted and saved successfully.")
+    logger.info("Please review cropped images and prepare label lists for each image.")
+
+    """
+    STEP 2: RUN EMBEDDING + UPLOAD
+    ------------------------------
+    After verifying cropped faces, create a list of label lists.
+    Each inner list must correspond to the number and order of faces detected in that image.
+    """
+
+    # Example: one list of labels per image (in same order as input_image_paths)
+    all_labels = [
+        ["Raghav","Sonali","Vinayak","Tala","Avi","Olivier","Atisha","Matene"],     # Labels for first image
+        ["Rajan Uncle", "Atisha", "Mom", "Rivaan"]         # Labels for second image
+    ]
+
+    #Step 2: Embed and upload each image with its corresponding labels
+    for input_image_path, labels in zip(input_image_paths, all_labels):
+        logger.info(f"Embedding and uploading faces for {input_image_path}")
+        reference_dataset = Reference_Dataset_Creation(input_image_path, output_image_path)
+        reference_dataset.embed_upload_to_qdrant(collection_name, labels)
+
+    logger.info("All labeled faces embedded and uploaded to Qdrant successfully.")
+    logger.info("Check http://localhost:6333/dashboard for the new collection.")
+
+    logger.info("FINAL : Code works!")
 
 
-    logger.info("[B] Reference dataset creation completed successfully. Check http://localhost:6333/dashboard")
+
+
+
+# if __name__ == "__main__":
+#     """
+#     Test pipeline for one .HEIC image.
+#     1. Detects and saves cropped faces.
+#     2. After verifying the crops, assigns labels.
+#     3. Embeds and uploads to Qdrant.
+#     """
+
+#     input_image_path = "data/query_images/IMG_8916.HEIC"
+#     output_image_path = "data/reference_images_faces"
+#     collection_name = "reference_dataset_collection"
+
+#     # Step 1: Extract and save cropped faces
+#     logger.info(f"Processing image: {input_image_path}")
+#     reference_dataset = Reference_Dataset_Creation(input_image_path, output_image_path)
+#     reference_dataset.extract_detected_faces_and_save_as_jpg()
+#     logger.info("Cropped faces saved successfully. Review and prepare labels.")
+
+#     # Step 2: Your verified labels for the detected faces
+#     labels = ["Raghav", "Sonali", "Vinayak", "Tala", "Avi", "Olivier", "Atisha", "Matene"]
+
+#     # Step 3: Embed and upload to Qdrant
+#     reference_dataset.embed_upload_to_qdrant(collection_name, labels)
+#     logger.info("All faces embedded and uploaded to Qdrant successfully.")
+
+
+
+    

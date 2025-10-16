@@ -1,6 +1,7 @@
 import os
 from qdrant_client import QdrantClient, models
 from loguru import logger
+import uuid
 #What aret these? 
 from typing import List, Dict
 
@@ -72,9 +73,9 @@ class VectorDB:
         #Zip pairs multiple iterable lists, enumerate helps by adding a runnning counter , in this case face_id.
         #Running a for loop over thre lists - detected_faces_list, labels, image_path (which are all pased as args in the function).
         #But image_path is not a list.
-        for face_id, (face_data,label) in enumerate(zip(detected_faces_list,labels),start=1):
+        for face_data,label in zip(detected_faces_list,labels):
             point = models.PointStruct(
-                id=face_id,
+                id=str(uuid.uuid4()),
                 vector=face_data["embedding"],
                 payload={
                     "facial_area" : face_data["facial_area"],

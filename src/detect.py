@@ -38,13 +38,16 @@ class Facial_Detection:
         logger.info(f"[2] {self.image_path} is valid")
 
 
-    def preprocess_image(self,convert_to : str = "RGB", resize : tuple = None):
+    def preprocess_image(
+        self,
+        image_path: str = None,
+        convert_to : str = "RGB",
+        resize : tuple = None):
+
         '''
         Preprocess the image, check for format, convert format if needed.
         '''
-        #Learning Note : Only using self here, since we have instantiated self.image_path and that
-        #is now a part of the class.
- 
+        image_path = image_path or self.image_path
         logger.info(f"[3] Preprocessing image: {self.image_path}")
 
         #Get image format - Convert to lowercase, split text and extract extension. Ignore former (img name)
@@ -54,38 +57,52 @@ class Facial_Detection:
         if ext not in SUPPORTED_FORMATS:
             raise ValueError(f"Unsupported image format: {ext}")
         
+        # if ext not in HEIC_FORMATS:
+        #     self.image = cv2.imread(self.image_path).convert(convert_to).resize(resize)
+        #     if self.image is None:
+        #         raise ValueError(f"OpenCV failed to read image: {self.image_path}")
+
         if ext not in HEIC_FORMATS:
-            self.image = cv2.imread(self.image_path).convert(convert_to).resize(resize)
-            if self.image is None:
-                raise ValueError(f"OpenCV failed to read image: {self.image_path}")
+            image = cv2.imread(image_path)
+            if image is None:
+                raise ValueError(f"OpenCV failed to read image: {image_path}")
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            if resize:
+                image = cv2.resize(image, resize)
+            return image
         
         #Converting to HEIC formats.        
-        if ext in HEIC_FORMATS:
-            # if not HEIC_SUPPORT:
-            #     raise Exception("HEIC support not available. Please install pillow-heif: uv add pillow-heif")
-
-            #Open the image using pillow-heif
-            pil_image = Image.open(self.image_path).convert(convert_to).resize(resize)
-            self.image = np.array(pil_image)
-            self.image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
-            logger.info(f"[4] Successfully converted HEIC image: {self.image_path}")
+        else:
+            pil_image = Image.open(image_path).convert(convert_to).resize(resize)
+            if resize:
+                pil_image = pil_image.resize(resize)
+            image = np.array(pil_image)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            logger.info(f"[4] Converted HEIC image: {image_path}")
         # LEARNING : Since image needs to be used just for this function, and not anytime for this class. Just use it ias a temp variable.
-        return self.image
+        return image
             
     # To be applied to query image in camera_image_matching.py        
     def facial_detection_embedding(
         self,
         detector_backend: str = "retinaface",
-        model_name: str = "ArcFace"
+        model_name: str = "ArcFace",
+        img_array: str = None
         ):
 
         '''
+        Takes in the image, that is the output of preprocess_image
         CONFIRM : If retinaface has issues detecting, compatibility issues and ArcFace issues for images
         Perform facial detection, embedding and extracting facial crops.
+
         '''
-        logger.info(f"[5] Performing facial detection on the image: {self.image_path}")
+        # Determine what to send to DeepFace
+        img_input = img_array if img_array is not None else self.image_path
+        logger.info(f"[5] Performing facial detection on the image")
+        
         results = DeepFace.represent(
-            img_path = self.image,
+
+            img_path = img_input,            
             detector_backend = detector_backend,
             model_name = model_name,
             enforce_detection = True,
@@ -95,36 +112,31 @@ class Facial_Detection:
         )
 
         logger.info("[6] Facial detection completed")
-        # output = []
-        # for res in results:
-        #     embedding = res["embedding"]
-        #     face_crop = res["facial_area"]
-        #     confidence = res["confidence"]
-        #     output.append({
-        #         "embedding": embedding,
-        #         "face_crop": face_crop,
-        #         "confidence": confidence
-        #     })
-
         return results
-
 
 
 if __name__ == "__main__":
     image_path = "data/query_images/IMG_2237.HEIC"
 
-    # #Creating an instance
-    detector = Facial_Detection(image_path)
+    try:
+        # Step 1: Create instance
+        detector = Facial_Detection(image_path)
 
-    #Preprocessing
-    processed_image = detector.preprocess_image(resize=(512, 512))
+        # Step 2: Preprocess image
+        processed_image = detector.preprocess_image(resize=(512, 512))
+        logger.info(f"[A] Preprocessed image shape: {processed_image.shape}, dtype: {processed_image.dtype}")
 
-    # #Facial detection
-    results = detector.facial_detection_embedding()
-    print([key for key in results[0].keys()])
-    logger.info("[7]Code works!")
-    
+        # Step 3: Generate embeddings
+        results = detector.facial_detection_embedding(img_array=processed_image)
+        logger.info(f"[B]Detected {len(results)} face(s)")
 
-'''Code works!'''
+        # Step 4: Inspect keys
+        logger.info(f"[C] Keys in first result: {list(results[0].keys())}")
+
+        logger.info("[D] Code executed successfully.")
+
+    except Exception as e:
+        logger.error(f"[E] Test failed: {e}")
+
 
 

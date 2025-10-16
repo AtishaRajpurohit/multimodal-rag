@@ -16,6 +16,7 @@ register_heif_opener()
 from detect import Facial_Detection
 from vector_db import VectorDB
 
+
 class Reference_Dataset_Creation:
     '''
     A class to create reference dataset of cropped faces and store them in an output directory, that is already created.
@@ -75,26 +76,27 @@ class Reference_Dataset_Creation:
 
         logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
 
-    def embed_detected_faces(self):
+        #return faces
+
+    def embed_upload_to_qdrant(
+        self,
+        collection_name: str
+        ):
         '''
-        Embeds the faces detected using facial_detection_embedding function for a face.
+        Embeds the faces and uploads them to Qdrant.
         '''
-        embedding = DeepFace.represent(
-            detector_backend="retinaface",
-            img_path = self.processed_image,
-            model_name = "ArcFace",
-            align = True,
-            normalization = "ArcFace"
+        #Calling the facial_detection_embedding function from detect.py
+        detector = Facial_Detection(self.input_image_path)
+        results = detector.facial_detection_embedding(img_path=self.processed_image)
+
+
+        #Uploading to Qdrant
+        vector_db = VectorDB()
+        vector_db.upload_detected_faces_to_qdrant(
+        collection_name=collection_name,
+        detected_faces_list=results,
+        image_path=self.input_image_path,
         )
-
-        logger.info(f"[7] Detected {len(embedding)} faces in {self.input_image_path}")        
-
-
-
-
-        #Create a collection and upload to the collection, call the functions from VectorDB.
-
-        
         
 #Test the code!    
 if __name__ == "__main__":
@@ -102,18 +104,11 @@ if __name__ == "__main__":
     output_image_path = "data/reference_images_faces"
     reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
     reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
-    reference_dataset_creation.embed_detected_faces()
-    
-    #Uploading to Qdrant
-    vector_db = VectorDB()
 
     logger.info(f"Creating a collection and uploading the faces to Qdrant")
-    vector_db.upload_detected_faces_to_qdrant(
-        collection_name="reference_dataset_collection",
-        detected_faces_list=results,
-        image_path=image_path,
-        )
+    collection_name = "reference_dataset_collection"
+    reference_dataset_creation.embed_upload_to_qdrant(collection_name)
 
-        
 
+    logger.info("Reference dataset creation completed successfully! :) Check http://localhost:6333/dashboard")
         

@@ -80,15 +80,16 @@ class Reference_Dataset_Creation:
 
     def embed_upload_to_qdrant(
         self,
-        collection_name: str
+        collection_name: str,
+        labels: List[str]
         ):
         '''
         Embeds the faces and uploads them to Qdrant.
         '''
         #Calling the facial_detection_embedding function from detect.py
         detector = Facial_Detection(self.input_image_path)
-        results = detector.facial_detection_embedding(img_path=self.processed_image)
-
+        processed_image = detector.preprocess_image(resize=(512, 512))
+        results = detector.facial_detection_embedding(img_array=processed_image)
 
         #Uploading to Qdrant
         vector_db = VectorDB()
@@ -96,19 +97,23 @@ class Reference_Dataset_Creation:
         collection_name=collection_name,
         detected_faces_list=results,
         image_path=self.input_image_path,
+        labels=labels
         )
         
 #Test the code!    
 if __name__ == "__main__":
+
     input_image_path = "data/query_images/IMG_8916.HEIC"
     output_image_path = "data/reference_images_faces"
+
     reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
     reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
-
-    logger.info(f"Creating a collection and uploading the faces to Qdrant")
+    logger.info(f"[A] Creating a collection and uploading the faces to Qdrant...")
+    
+    #Uploading the reference images along with labels.
     collection_name = "reference_dataset_collection"
-    reference_dataset_creation.embed_upload_to_qdrant(collection_name)
+    labels = ["Raghav","Sonali","Vinayak","Tala","Avi","Olivier","Atisha","Matene"]
+    reference_dataset_creation.embed_upload_to_qdrant(collection_name, labels)
 
 
-    logger.info("Reference dataset creation completed successfully! :) Check http://localhost:6333/dashboard")
-        
+    logger.info("[B] Reference dataset creation completed successfully. Check http://localhost:6333/dashboard")

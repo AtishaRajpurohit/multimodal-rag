@@ -91,8 +91,9 @@ class Facial_Detection:
             enforce_detection = True,
             align = True,
             #What does this do ? 
-            normalization = "base"
+            normalization = "ArcFace"
         )
+
         logger.info("[6] Facial detection completed")
         output = []
         for res in results:

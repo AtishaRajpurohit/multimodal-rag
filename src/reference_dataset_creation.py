@@ -6,6 +6,8 @@ import cv2
 from PIL import Image
 import numpy as np
 from deepface import DeepFace
+from qdrant_client import QdrantClient, models
+
 
 #Importing pillow-heif for HEIC support
 from pillow_heif import register_heif_opener
@@ -20,7 +22,6 @@ class Reference_Dataset_Creation:
     def __init__(self,input_image_path: str,output_image_path: str):
         self.input_image_path = input_image_path
         self.output_image_path = output_image_path
-        self.processed_image = processed_image
 
         #Checking for input image path
         logger.info(f"[1] Checking for input image path: {self.input_image_path}")
@@ -41,49 +42,86 @@ class Reference_Dataset_Creation:
     def extract_detected_faces_and_save_as_jpg(self):
         '''
         Extracts the detected faces and stores the cropped images in a jpg format in the output image path.
+        
+        deepface.extract_faces returns a list of dictionaries with the keys:
+        "face": numpy array of the cropped face
+        "facial_area": list of 4 integers, the coordinates of the face in the image
+        "confidence": float, the confidence score of the face detection
+
+        deepface.represent returns a list of dictionaries with the keys:
+        "embedding": numpy array of the facial embedding
+        "facial_area": list of 4 integers, the coordinates of the face in the image
+        "confidence": float, the confidence score of the face detection
         '''
         #Calling the preprocessing function from detect.py
         detector = Facial_Detection(self.input_image_path)
-        processed_image = detector.preprocess_image(resize=(512, 512))
-        
-        #Extract faces returns a numpy array of faces.
-        # faces = DeepFace.extract_faces(img_path=processed_image, detector_backend="retinaface")
-        # logger.info(f"[5] Extracted {len(faces)} faces from {self.input_image_path}")
-        # #What should faces have ?
-        
-        # # faces is a list of dicts, each with a cropped face
-        # for i, face in enumerate(faces):
+        self.processed_image = detector.preprocess_image(resize=(512, 512))
+                
+        faces = DeepFace.extract_faces(
+            img_path=self.processed_image,
+            detector_backend="retinaface")
+        logger.info(f"Keys in faces: {faces[0].keys()}")
 
-        #     # Saving faces by rescaling, converting RGB to BGR since something is happening in the processing function qith the HEIC format images.
-        #     # 'face' contains a numpy array of the cropped face
-        #     cropped_face = (face["face"] * 255).astype("uint8")  # DeepFace normalizes, so rescale back
-        #     cropped_face_bgr = cv2.cvtColor(cropped_face, cv2.COLOR_RGB2BGR)  # convert RGB → BGR
 
-        #     cv2.imwrite(f"{self.output_image_path}/face_{i+1}_{self.input_image_path.split('/')[-1]}.jpg", cropped_face_bgr)
-        # logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
+        logger.info(f"[5] Extracted {len(faces)} faces from {self.input_image_path}")
+        
+        for i, face in enumerate(faces):
+            # Saving faces by rescaling, converting RGB to BGR since something is happening in the processing function qith the HEIC format images.
+            cropped_face = (face["face"] * 255).astype("uint8")  # DeepFace normalizes, so rescale back
+            cropped_face_bgr = cv2.cvtColor(cropped_face, cv2.COLOR_RGB2BGR)  # convert RGB → BGR
+            cv2.imwrite(f"{self.output_image_path}/face_{i+1}_{self.input_image_path.split('/')[-1]}.jpg", cropped_face_bgr)
+
+        logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
 
     def embed_detected_faces(self):
         '''
         Embeds the faces detected using facial_detection_embedding function for a face.
         '''
         embedding = DeepFace.represent(
-            img_path = processed_image,
+            detector_backend="retinaface",
+            img_path = self.processed_image,
             model_name = "ArcFace",
-            enforce_detection = True,
             align = True,
-            normalization = "base"
+            normalization = "ArcFace"
         )
-        return embedding
-        print(embedding.shape)
 
+        logger.info(f"[7] Detected {len(embedding)} faces in {self.input_image_path}")        
 
+        embedding_vector = []
+        for face in embedding:
+            embedding_vector.append(face["embedding"])
+        return embedding_vector
+
+    def upload_detected_faces_to_qdrant(self,labels: List[str]):
+        '''
+        Uploads the detected facial embeddings to Qdrant, with the labels that must be derived manually,
+        after viewing the images in the data/reference_images_faces directory.
+        '''
+        embedding_vector = self.embed_detected_faces()
+        points = []
+
+        #Creating the points in a PointStruct object. Is that necessary or good practice? 
+        for face_id, (embedding_vector, label) in enumerate(zip(embedding_vector, labels),start=1):
+            point = models.PointStruct(
+                id=face_id,
+                vector=embedding_vector,
+                payload={
+                    "label": labels[face_id]
+                }
+            )
+            points.append(point)
+        logger.info(f"[8] Created {len(points)} points")
+        
+        
 #Test the code!    
 if __name__ == "__main__":
-    input_image_path =["data/ref_images/IMG_2872.HEIC","data/ref_images/FullSizeRender.HEIC"]
+    input_image_path = ["data/query_images/IMG_8916.HEIC"]
     for input_image_path in input_image_path:
-
         output_image_path = "data/reference_images_faces"
-        reference_dataset_creation = Reference_Dataset_Creation(input_image_path,output_image_path)
+        reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
         reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
         reference_dataset_creation.embed_detected_faces()
 
+        
+
+        

@@ -14,6 +14,7 @@ from pillow_heif import register_heif_opener
 register_heif_opener()
 
 from detect import Facial_Detection
+from vector_db import VectorDB
 
 class Reference_Dataset_Creation:
     '''
@@ -49,9 +50,10 @@ class Reference_Dataset_Creation:
         "confidence": float, the confidence score of the face detection
 
         deepface.represent returns a list of dictionaries with the keys:
+
         "embedding": numpy array of the facial embedding
         "facial_area": list of 4 integers, the coordinates of the face in the image
-        "confidence": float, the confidence score of the face detection
+        "face_confidence": float, the confidence score of the face detection
         '''
         #Calling the preprocessing function from detect.py
         detector = Facial_Detection(self.input_image_path)
@@ -87,40 +89,30 @@ class Reference_Dataset_Creation:
 
         logger.info(f"[7] Detected {len(embedding)} faces in {self.input_image_path}")        
 
-        embedding_vector = []
-        for face in embedding:
-            embedding_vector.append(face["embedding"])
-        return embedding_vector
 
-    def upload_detected_faces_to_qdrant(self,labels: List[str]):
-        '''
-        Uploads the detected facial embeddings to Qdrant, with the labels that must be derived manually,
-        after viewing the images in the data/reference_images_faces directory.
-        '''
-        embedding_vector = self.embed_detected_faces()
-        points = []
 
-        #Creating the points in a PointStruct object. Is that necessary or good practice? 
-        for face_id, (embedding_vector, label) in enumerate(zip(embedding_vector, labels),start=1):
-            point = models.PointStruct(
-                id=face_id,
-                vector=embedding_vector,
-                payload={
-                    "label": labels[face_id]
-                }
-            )
-            points.append(point)
-        logger.info(f"[8] Created {len(points)} points")
+
+        #Create a collection and upload to the collection, call the functions from VectorDB.
+
         
         
 #Test the code!    
 if __name__ == "__main__":
-    input_image_path = ["data/query_images/IMG_8916.HEIC"]
-    for input_image_path in input_image_path:
-        output_image_path = "data/reference_images_faces"
-        reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
-        reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
-        reference_dataset_creation.embed_detected_faces()
+    input_image_path = "data/query_images/IMG_8916.HEIC"
+    output_image_path = "data/reference_images_faces"
+    reference_dataset_creation = Reference_Dataset_Creation(input_image_path, output_image_path)
+    reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
+    reference_dataset_creation.embed_detected_faces()
+    
+    #Uploading to Qdrant
+    vector_db = VectorDB()
+
+    logger.info(f"Creating a collection and uploading the faces to Qdrant")
+    vector_db.upload_detected_faces_to_qdrant(
+        collection_name="reference_dataset_collection",
+        detected_faces_list=results,
+        image_path=image_path,
+        )
 
         
 

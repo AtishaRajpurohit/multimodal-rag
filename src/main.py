@@ -33,7 +33,7 @@ if __name__ == "__main__":
     processed_image = detector.preprocess_image(resize=(512, 512))
 
     #Facial detection
-    results = detector.perform_facial_detection()
+    results = detector.facial_detection_embedding()
 
     #Uploading to Qdrant
     vector_db = VectorDB()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     vector_db.upload_detected_faces_to_qdrant(
         collection_name="detected_faces_collection",
         detected_faces_list=results,
-        image_path=image_path
+        image_path=image_path,
         )
 
     logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")

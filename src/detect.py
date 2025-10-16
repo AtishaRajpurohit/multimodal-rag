@@ -95,17 +95,18 @@ class Facial_Detection:
         )
 
         logger.info("[6] Facial detection completed")
-        output = []
-        for res in results:
-            embedding = res["embedding"]
-            #Aligned cropped face as np.array
-            face_crop = res["facial_area"]
-            output.append({
-                "embedding": embedding,
-                "face_crop": face_crop
-            })
+        # output = []
+        # for res in results:
+        #     embedding = res["embedding"]
+        #     face_crop = res["facial_area"]
+        #     confidence = res["confidence"]
+        #     output.append({
+        #         "embedding": embedding,
+        #         "face_crop": face_crop,
+        #         "confidence": confidence
+        #     })
 
-        return output
+        return results
 
 
 

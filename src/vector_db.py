@@ -45,22 +45,27 @@ class VectorDB:
         logger.info(f" [5] Collection {collection_name} deleted successfully")
 
     def upload_detected_faces_to_qdrant(
+        
         self,
         collection_name: str, #Params without defaults need to come before params with defaults!
         detected_faces_list : List[Dict],
-        labels: List[str],
         #NEED TO FIX : How to make the path asked once?
         image_path: str,
         distance:str = "Cosine",
         vector_size:int = 512,
+        labels: List[str] = None
         ):
-
         #Create a collection
         if not self.collection_exists(collection_name):
             #Without self, Python is looking for a standalone function, which doesnt exist. The function exists inside the class.
             self.create_collection(collection_name,vector_size,distance)
 
-        #ADD LABEL VALDATION!
+        #If labels does not exist, set to "Unknown"
+        if not labels:  # Check if list is empty
+            labels = ["Unknown"] * len(detected_faces_list)
+        elif len(labels) < len(detected_faces_list):
+            labels.extend(["Unknown"] * (len(detected_faces_list) - len(labels)))
+
 
         #Convert results to points
         points = []
@@ -72,7 +77,8 @@ class VectorDB:
                 id=face_id,
                 vector=face_data["embedding"],
                 payload={
-                    "face_data" : face_data["face_crop"],
+                    "facial_area" : face_data["facial_area"],
+                    "face_confidence" : face_data["face_confidence"],
                     "image_path" : image_path,
                     "label" : label
                 }

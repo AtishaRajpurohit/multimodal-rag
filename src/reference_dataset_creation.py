@@ -20,6 +20,7 @@ class Reference_Dataset_Creation:
     def __init__(self,input_image_path: str,output_image_path: str):
         self.input_image_path = input_image_path
         self.output_image_path = output_image_path
+        self.processed_image = processed_image
 
         #Checking for input image path
         logger.info(f"[1] Checking for input image path: {self.input_image_path}")
@@ -45,18 +46,35 @@ class Reference_Dataset_Creation:
         detector = Facial_Detection(self.input_image_path)
         processed_image = detector.preprocess_image(resize=(512, 512))
         
-        faces = DeepFace.extract_faces(img_path=processed_image, detector_backend="retinaface")
-        logger.info(f"[5] Extracted {len(faces)} faces from {self.input_image_path}")
+        #Extract faces returns a numpy array of faces.
+        # faces = DeepFace.extract_faces(img_path=processed_image, detector_backend="retinaface")
+        # logger.info(f"[5] Extracted {len(faces)} faces from {self.input_image_path}")
+        # #What should faces have ?
         
-        # faces is a list of dicts, each with a cropped face
-        for i, face in enumerate(faces):
+        # # faces is a list of dicts, each with a cropped face
+        # for i, face in enumerate(faces):
 
-            # 'face' contains a numpy array of the cropped face
-            cropped_face = (face["face"] * 255).astype("uint8")  # DeepFace normalizes, so rescale back
-            cropped_face_bgr = cv2.cvtColor(cropped_face, cv2.COLOR_RGB2BGR)  # convert RGB → BGR
+        #     # Saving faces by rescaling, converting RGB to BGR since something is happening in the processing function qith the HEIC format images.
+        #     # 'face' contains a numpy array of the cropped face
+        #     cropped_face = (face["face"] * 255).astype("uint8")  # DeepFace normalizes, so rescale back
+        #     cropped_face_bgr = cv2.cvtColor(cropped_face, cv2.COLOR_RGB2BGR)  # convert RGB → BGR
 
-            cv2.imwrite(f"{self.output_image_path}/face_{i+1}_{self.input_image_path.split('/')[-1]}.jpg", cropped_face_bgr)
-        logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
+        #     cv2.imwrite(f"{self.output_image_path}/face_{i+1}_{self.input_image_path.split('/')[-1]}.jpg", cropped_face_bgr)
+        # logger.info(f"[6] Stored {len(faces)} faces in {self.output_image_path}")
+
+    def embed_detected_faces(self):
+        '''
+        Embeds the faces detected using facial_detection_embedding function for a face.
+        '''
+        embedding = DeepFace.represent(
+            img_path = processed_image,
+            model_name = "ArcFace",
+            enforce_detection = True,
+            align = True,
+            normalization = "base"
+        )
+        return embedding
+        print(embedding.shape)
 
 
 #Test the code!    
@@ -67,3 +85,5 @@ if __name__ == "__main__":
         output_image_path = "data/reference_images_faces"
         reference_dataset_creation = Reference_Dataset_Creation(input_image_path,output_image_path)
         reference_dataset_creation.extract_detected_faces_and_save_as_jpg()
+        reference_dataset_creation.embed_detected_faces()
+

@@ -2,15 +2,21 @@ import cv2
 import logging
 from deepface import DeepFace
 from qdrant_client import QdrantClient
+from loguru import logger
 
-# Configure logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+# Configure logger - Did this work ? I dont think it does.
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s [%(levelname)s] %(message)s")
+client = QdrantClient(url="http://localhost:6333")
 logger = logging.getLogger(__name__)
 
-#Step 1 - Image Capture, Embedding, and Uploading to Qdrant
+#Create the refrence read the reference image, upload it to a reference directory on Qdrant.
+
+#Step 0 - Read the image aand load Qdrant. 
+
+
+#Step  - Image Capture, Embedding, and Uploading to Qdrant
 def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
     """
     Opens the webcam, displays live video, and captures an image
@@ -91,34 +97,6 @@ def get_face_embedding(image_path: str):
         logger.error(f"Error extracting face embedding for {image_path}: {e}")
         return None
 
-#Step 3 - Qdrant
-# from qdrant_client import QdrantClient, models
-
-# client = QdrantClient("http://localhost:6333")  # or your Qdrant URL
-
-# def ensure_collection(collection_name="face_embeddings"):
-#     if collection_name not in [c.name for c in client.get_collections().collections]:
-#         client.create_collection(
-#             collection_name=collection_name,
-#             vectors_config=models.VectorParams(size=512, distance="Cosine")
-#         )
-#         logger.info(f"Created Qdrant collection '{collection_name}'")
-
-#Step 4 - Store Embedding into Qdrant
-# import time
-
-# def upload_embedding_to_qdrant(embedding, image_path, collection_name="face_embeddings"):
-#     """
-#     Uploads a face embedding with metadata to Qdrant.
-#     """
-#     point = models.PointStruct(
-#         id=int(time.time() * 1000),
-#         vector=embedding,
-#         payload={"image_path": image_path}
-#     )
-#     client.upsert(collection_name=collection_name, points=[point])
-#     logger.info(f"Uploaded embedding for {image_path} to Qdrant")
-
 #Step 5 - Perform Vector Matching
 def search_similar_faces(query_embedding, collection_name="face_embeddings", top_k=1):
     client = QdrantClient("http://localhost:6333")
@@ -147,8 +125,8 @@ def search_similar_faces(query_embedding, collection_name="face_embeddings", top
 
 
 if __name__ == "__main__":
+    
     result = capture_images_from_webcam()
-    #print(len(result[0]["embedding"]))
 
     search_similar_faces(result[0]["embedding"], collection_name="ref_image_test1", top_k=1)
     logger.info("Pipeline completed successfully! :) Log off!!!")

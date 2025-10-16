@@ -25,6 +25,7 @@ class Facial_Detection:
     '''
     A class to preprocess uploaded images, check for format, convert format if needed.
     Perform facial detection, embedding and extracting facial crops.
+    Usage : 
     '''
     def __init__(self,image_path: str):
         self.image_path = image_path
@@ -38,11 +39,12 @@ class Facial_Detection:
 
 
     def preprocess_image(self,convert_to : str = "RGB", resize : tuple = None):
-        #Learning Note : Only using self here, since we have instantiated self.image_path and that
-        #is now a part of the class.
         '''
         Preprocess the image, check for format, convert format if needed.
         '''
+        #Learning Note : Only using self here, since we have instantiated self.image_path and that
+        #is now a part of the class.
+ 
         logger.info(f"[3] Preprocessing image: {self.image_path}")
 
         #Get image format - Convert to lowercase, split text and extract extension. Ignore former (img name)
@@ -70,8 +72,13 @@ class Facial_Detection:
         # LEARNING : Since image needs to be used just for this function, and not anytime for this class. Just use it ias a temp variable.
         return self.image
             
-            
-    def perform_facial_detection(self,detector_backend: str = "retinaface",model_name: str = "ArcFace"):
+    # To be applied to query image in camera_image_matching.py        
+    def facial_detection_embedding(
+        self,
+        detector_backend: str = "retinaface",
+        model_name: str = "ArcFace"
+        ):
+
         '''
         CONFIRM : If retinaface has issues detecting, compatibility issues and ArcFace issues for images
         Perform facial detection, embedding and extracting facial crops.
@@ -111,12 +118,10 @@ if __name__ == "__main__":
     processed_image = detector.preprocess_image(resize=(512, 512))
 
     # #Facial detection
-    results = detector.perform_facial_detection()
+    results = detector.facial_detection_embedding()
     print([key for key in results[0].keys()])
+    logger.info("[7]Code works!")
     
-
-
-   
 
 '''Code works!'''
 

@@ -46,8 +46,7 @@ class VectorDB:
 
     def upload_detected_faces_to_qdrant(
         self,
-        collection_name: str,
-        #Params without defaults need to come before params with defaults!
+        collection_name: str, #Params without defaults need to come before params with defaults!
         detected_faces_list : List[Dict],
         labels: List[str],
         #NEED TO FIX : How to make the path asked once?
@@ -56,6 +55,7 @@ class VectorDB:
         vector_size:int = 512,
         ):
 
+        #Create a collection
         if not self.collection_exists(collection_name):
             #Without self, Python is looking for a standalone function, which doesnt exist. The function exists inside the class.
             self.create_collection(collection_name,vector_size,distance)
@@ -64,7 +64,10 @@ class VectorDB:
 
         #Convert results to points
         points = []
-        for face_id, (face_data,label,image_path) in enumerate(zip(detected_faces_list,labels,image_path),start=1):
+        #Zip pairs multiple iterable lists, enumerate helps by adding a runnning counter , in this case face_id.
+        #Running a for loop over thre lists - detected_faces_list, labels, image_path (which are all pased as args in the function).
+        #But image_path is not a list.
+        for face_id, (face_data,label) in enumerate(zip(detected_faces_list,labels),start=1):
             point = models.PointStruct(
                 id=face_id,
                 vector=face_data["embedding"],

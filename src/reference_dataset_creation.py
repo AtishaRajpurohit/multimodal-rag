@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     logger.info("FINAL : Code works!")
 
-'''For tomorrow : Make the reusability better, so reference dataset creation can be used for other images as well.'''
+'''For tomorrow/another day : Make the reusability better, so reference dataset creation can be used for other images as well.'''
 
 
 

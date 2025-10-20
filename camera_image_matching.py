@@ -9,6 +9,7 @@ from loguru import logger
 #     level=logging.INFO,
 #     format="%(asctime)s [%(levelname)s] %(message)s")
 client = QdrantClient(url="http://localhost:6333")
+
 logger = logging.getLogger(__name__)
 
 #Create the refrence read the reference image, upload it to a reference directory on Qdrant.
@@ -63,6 +64,7 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
                     logger.warning(f"No faces detected in {img_name}")
                 else:
                     matches = []
+                    #f must be a dictionary
                     for f in faces:
                         embedding = f.get("embedding")
                         if embedding is not None:
@@ -102,15 +104,27 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
 def get_face_embeddings(image_path: str):
     '''Get the embedding for a face in an image'''
     try:
-        result=DeepFace.represent(
+        results=DeepFace.represent(
             img_path=image_path,
             model_name = "ArcFace",
             detector_backend = "retinaface",
             enforce_detection = False
         )
-        embedding = result[0]["embedding"]
-        logger.info(f"Face embedding extracted for {image_path}")
-        return embedding
+
+        #Is this really needed?
+        if not isinstance(result, list):
+            results=[results]
+
+        faces=[]
+        for r in results:
+            faces.append({
+                "embedding": r["embedding"],
+                "facial_area": r["facial_area"],
+                "face_confidence": r["face_confidence"]
+            })
+        logger.info(f"Extracted {len(faces)} faces from {image_path}")
+        return faces
+        #result is a list of dictionaries, each dictionary contains the embedding for a face.
     
     except Exception as e:
         logger.error(f"Error extracting face embedding for {image_path}: {e}")
@@ -118,23 +132,27 @@ def get_face_embeddings(image_path: str):
 
 #Step 5 - Perform Vector Matching
 def search_similar_faces(query_embedding, collection_name, top_k=1):
-    client = QdrantClient("http://localhost:6333")
     try:
         search_results = client.search(
             collection_name=collection_name,
             query_vector=query_embedding,
-            limit=top_k
+            limit=top_k,
+            with_payload=True
         )
+        
         matches = []
         for res in search_results:
-            label = res.payload.get("label", "Unknown")
+            #Avoids NoneType error, just set payload = True, so you can call it here directly!
+            payload = res.payload or {}
             matches.append({
                 "id": res.id,
-                "label": label,
+                #Use label from payload
+                "label": payload.get("label", "Unknown"),
                 "score": res.score
         })
+
         for m in matches:
-            print(f"→ Label: {m['label']} | Score: {m['score']:.4f}")
+            logger.info(f"→ Label: {m['label']} | Score: {m['score']:.4f}")
 
         return matches
     
@@ -147,7 +165,7 @@ if __name__ == "__main__":
     
     result = capture_images_from_webcam()
 
-    search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
+    #search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
     logger.info("Pipeline completed successfully! :) Log off!!!")
 
     '''For tomorrow :

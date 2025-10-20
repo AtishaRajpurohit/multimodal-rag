@@ -4,13 +4,8 @@ from deepface import DeepFace
 from qdrant_client import QdrantClient
 from loguru import logger
 
-# Configure logger - Did this work ? I dont think it does.
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s [%(levelname)s] %(message)s")
-client = QdrantClient(url="http://localhost:6333")
 
-logger = logging.getLogger(__name__)
+client = QdrantClient(url="http://localhost:6333")
 
 #Create the refrence read the reference image, upload it to a reference directory on Qdrant.
 
@@ -18,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 #Step  - Image Capture, Embedding, and Uploading to Qdrant
-def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
+def capture_images_from_webcam(
+    window_name="Python Webcam Screenshot",
+    collection_name="reference_dataset_collection"
+    ):
     """
     Opens the webcam, displays live video, and captures an image
     each time the SPACE key is pressed.
@@ -75,7 +73,8 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
                             )
                             if result:
                                 #Adding the label to the results from Deepface! Just updating results with faces!
-                                f["label"]=result[0]
+                                f["label"]=result[0]["label"]
+                                f["score"]=result[0]["score"]
                             matches.append(f)
 
 
@@ -112,7 +111,7 @@ def get_face_embeddings(image_path: str):
         )
 
         #Is this really needed?
-        if not isinstance(result, list):
+        if not isinstance(results, list):
             results=[results]
 
         faces=[]
@@ -162,11 +161,18 @@ def search_similar_faces(query_embedding, collection_name, top_k=1):
 
 
 if __name__ == "__main__":
-    
-    result = capture_images_from_webcam()
+    collection_name = "reference_dataset_collection"
+    all_results = capture_images_from_webcam(collection_name=collection_name)
+    for result in all_results:
+        for match in result['matches']:
+            logger.info(f"  - Person: {match.get('label', 'Unknown')}")
+            logger.info(f"    Score: {match.get('score', 'N/A')}")
+    logger.info("Pipeline completed successfully! :)")
+
+
+
 
     #search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
-    logger.info("Pipeline completed successfully! :) Log off!!!")
 
     '''For tomorrow :
     So far we are able to search and get the names.

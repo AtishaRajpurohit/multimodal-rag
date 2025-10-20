@@ -46,28 +46,45 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
             cv2.imshow(window_name, frame)
             k = cv2.waitKey(1)
 
+            # ESC pressed
             if k % 256 == 27:
-                # ESC pressed
                 logger.info("Escape key pressed. Closing...")
                 break
 
+            # SPACE pressed
             elif k % 256 == 32:
-                # SPACE pressed
                 img_name = f"opencv_frame_{img_counter}.png"
                 cv2.imwrite(img_name, frame)
-                logger.info(f"Screenshot saved: {img_name}")
+                logger.info(f"Captured Image: {img_name}")
+                #Get facial embeddings
+                faces = get_face_embeddings(img_name)
 
-                embedding = get_face_embedding(img_name)
-                captured_results.append({
-                    "image_path": img_name,
-                    "embedding": embedding
-                })
-                if embedding is not None:
-                    #upload_embedding_to_qdrant(embedding, img_name)
-                    logger.info(f"Embedding Not found")
-                img_counter += 1
+                if not faces:
+                    logger.warning(f"No faces detected in {img_name}")
+                else:
+                    matches = []
+                    for f in faces:
+                        embedding = f.get("embedding")
+                        if embedding is not None:
+                            result = search_similar_faces(
+                                query_embedding = embedding,
+                                collection_name = collection_name,
+                                top_k=1
+                            )
+                            if result:
+                                #Adding the label to the results from Deepface! Just updating results with faces!
+                                f["label"]=result[0]
+                            matches.append(f)
+
+
+
                 
-
+                    captured_results.append({
+                        "image_path": img_name, #Path of the image that was captured.
+                        "matches": matches #List of dictionaries with the keys: id, label, score.
+                    })
+                    img_counter += 1
+                
     except KeyboardInterrupt:
         logger.warning("KeyboardInterrupt detected. Stopping capture loop...")
 
@@ -82,7 +99,7 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
     return captured_results
 
 #Step 2 - Embedding
-def get_face_embedding(image_path: str):
+def get_face_embeddings(image_path: str):
     '''Get the embedding for a face in an image'''
     try:
         result=DeepFace.represent(

@@ -24,10 +24,12 @@ def capture_images_from_webcam(window_name="Python Webcam Screenshot"):
     Press ESC to close the window safely.
     Press SPACE to capture an image, get the embedding and store it in Qdrant.
     """
-    cam = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  # Use CAP_DSHOW on Windows if needed
+    # Camera backend is the bridge or driver interface that OpenCV uses to communicate with your system's camera hardware.
+    cam = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  #Open the first camera "0" using the AVFoundation backend. 
     if not cam.isOpened():
         logger.error("Could not open webcam.")
         return
+
 
     cv2.namedWindow(window_name)
     img_counter = 0
@@ -135,4 +137,4 @@ if __name__ == "__main__":
     So far we are able to search and get the names.
     1. Return the search results as a list of dictionaries with the keys: id, label, score.
     2. Multimodal Embedding for the user-clicked photo.
-    3. Supply the search results, along with the multimodal embedding to the LLM.
+    3. Supply the search results, along with the multimodal embedding to the LLM.'''

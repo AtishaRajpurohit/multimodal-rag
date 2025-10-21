@@ -159,6 +159,38 @@ def search_similar_faces(query_embedding, collection_name, top_k=1):
         logger.error(f"Error searching for similar faces: {e}")
         return []
 
+# ⚙️ Helper: process a single image file exactly like capture_images_from_webcam would
+def process_single_image(image_path):
+    """
+    Takes an image path and runs embedding + matching,
+    returning results in the same format as capture_images_from_webcam().
+    """
+    faces = get_face_embeddings(image_path)
+    results = []
+
+    if not faces:
+        logger.warning(f"No faces detected in {image_path}.")
+    else:
+        matches = []
+        for f in faces:
+            emb = f.get("embedding")
+            if emb is not None:
+                result = search_similar_faces(
+                    query_embedding=emb,
+                    collection_name="reference_dataset_collection",
+                    top_k=1
+                )
+                if result:
+                    f["match"] = result[0]
+                matches.append(f)
+        results.append({
+            "image_path": image_path,
+            "faces": matches
+        })
+
+    return results
+
+
 
 if __name__ == "__main__":
     collection_name = "reference_dataset_collection"

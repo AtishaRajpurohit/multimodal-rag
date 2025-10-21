@@ -4,27 +4,24 @@ from deepface import DeepFace
 from qdrant_client import QdrantClient
 from loguru import logger
 
-
 client = QdrantClient(url="http://localhost:6333")
 
-#Create the refrence read the reference image, upload it to a reference directory on Qdrant.
 
-#Step 0 - Read the image aand load Qdrant. 
-
-
-#Step  - Image Capture, Embedding, and Uploading to Qdrant
+#Step 1 - Main Function : Image Capture
+# Helper Function : Embedding and Uploading to Qdrant
 def capture_images_from_webcam(
     window_name="Python Webcam Screenshot",
     collection_name="reference_dataset_collection"
     ):
     """
-    Opens the webcam, displays live video, and captures an image
+    Opens the webcam, displays webcam, and captures an image.
     each time the SPACE key is pressed.
     Press ESC to close the window safely.
     Press SPACE to capture an image, get the embedding and store it in Qdrant.
     """
     # Camera backend is the bridge or driver interface that OpenCV uses to communicate with your system's camera hardware.
-    cam = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  #Open the first camera "0" using the AVFoundation backend. 
+    # Open the first camera "0" using the AVFoundation backend. 
+    cam = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  
     if not cam.isOpened():
         logger.error("Could not open webcam.")
         return
@@ -159,7 +156,7 @@ def search_similar_faces(query_embedding, collection_name, top_k=1):
         logger.error(f"Error searching for similar faces: {e}")
         return []
 
-# ⚙️ Helper: process a single image file exactly like capture_images_from_webcam would
+# Helper: process a single image file exactly like capture_images_from_webcam would - Difference in this and main function? 
 def process_single_image(image_path):
     """
     Takes an image path and runs embedding + matching,
@@ -204,7 +201,6 @@ if __name__ == "__main__":
 
 
 
-    #search_similar_faces(result[0]["embedding"], collection_name="reference_dataset_collection", top_k=1)
 
     '''For tomorrow :
     So far we are able to search and get the names.

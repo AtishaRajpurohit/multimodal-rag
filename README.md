@@ -32,3 +32,17 @@ Step 5 : Install qdrant client
 
 Note : The current code runs qdrant locally!
 
+## Packages Used 
+#### 1. OpenCV
+Used for comouter vision image reading.
+#### 2. Pillow 
+Used for conversion and handling of iPhone images (.HEIC).
+#### 3. DeepFace 
+Used RetinaFace for facial detection and ArcFace for facial embeddings. 
+#### 4. SigLIP 
+Used for multimodal embedding.
+#### 5. LLaVA/GPT-4v 
+Used for multimodal generation.
+#### 6. loguru
+Used for logging
+

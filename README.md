@@ -45,4 +45,5 @@ Used for multimodal embedding.
 Used for multimodal generation.
 #### 6. loguru
 Used for logging
-
+#### 7. streamlit
+Used for an easy front end. 

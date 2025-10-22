@@ -47,3 +47,9 @@ Used for multimodal generation.
 Used for logging
 #### 7. streamlit
 Used for an easy front end. 
+
+## Outputs 
+### Output from the facial detection + recognition pipeline:
+![Alt text](Screenshot 2025-10-22 at 3.38.17 PM.png)
+
+

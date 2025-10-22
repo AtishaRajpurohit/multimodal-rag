@@ -192,20 +192,25 @@ def process_single_image(image_path,collection_name="reference_dataset_collectio
 
 if __name__ == "__main__":
     collection_name = "reference_dataset_collection"
-    # all_results = process_single_image(image_path="temp_image.png",collection_name=collection_name)
-    # print(all_results)
+    all_results = process_single_image(image_path="temp_image.png",collection_name=collection_name)
+    temp = ((all_results[0]["faces"][0]))
+    print(temp["match"])
+    
+    
+
+    #print(len(all_results[0]["faces"]))
 
 
 
 
 
     
-    all_results = capture_images_from_webcam(collection_name=collection_name)
-    for result in all_results:
-        for match in result['matches']:
-            logger.info(f"  - Person: {match.get('label', 'Unknown')}")
-            logger.info(f"    Score: {match.get('score', 'N/A')}")
-    logger.info("Pipeline completed successfully! :)")
+    # all_results = capture_images_from_webcam(collection_name=collection_name)
+    # for result in all_results:
+    #     for match in result['matches']:
+    #         logger.info(f"  - Person: {match.get('label', 'Unknown')}")
+    #         logger.info(f"    Score: {match.get('score', 'N/A')}")
+    # logger.info("Pipeline completed successfully! :)")
 
     # Add this at the very end of your file, after line 209
 

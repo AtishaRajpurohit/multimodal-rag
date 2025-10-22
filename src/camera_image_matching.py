@@ -1,5 +1,4 @@
 import cv2
-import logging
 from deepface import DeepFace
 from qdrant_client import QdrantClient
 from loguru import logger
@@ -19,6 +18,7 @@ def capture_images_from_webcam(
     Press ESC to close the window safely.
     Press SPACE to capture an image, get the embedding and store it in Qdrant.
     """
+
     # Camera backend is the bridge or driver interface that OpenCV uses to communicate with your system's camera hardware.
     # Open the first camera "0" using the AVFoundation backend. 
     cam = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)  
@@ -157,7 +157,7 @@ def search_similar_faces(query_embedding, collection_name, top_k=1):
         return []
 
 # Helper: process a single image file exactly like capture_images_from_webcam would - Difference in this and main function? 
-def process_single_image(image_path):
+def process_single_image(image_path,collection_name="reference_dataset_collection"):
     """
     Takes an image path and runs embedding + matching,
     returning results in the same format as capture_images_from_webcam().
@@ -170,14 +170,15 @@ def process_single_image(image_path):
     else:
         matches = []
         for f in faces:
-            emb = f.get("embedding")
-            if emb is not None:
+            embedding = f.get("embedding")
+            if embedding is not None:
                 result = search_similar_faces(
-                    query_embedding=emb,
-                    collection_name="reference_dataset_collection",
+                    query_embedding=embedding,
+                    collection_name=collection_name,
                     top_k=1
                 )
                 if result:
+                    #Extracting the first match.
                     f["match"] = result[0]
                 matches.append(f)
         results.append({
@@ -191,19 +192,27 @@ def process_single_image(image_path):
 
 if __name__ == "__main__":
     collection_name = "reference_dataset_collection"
-    all_results = capture_images_from_webcam(collection_name=collection_name)
-    for result in all_results:
-        for match in result['matches']:
-            logger.info(f"  - Person: {match.get('label', 'Unknown')}")
-            logger.info(f"    Score: {match.get('score', 'N/A')}")
-    logger.info("Pipeline completed successfully! :)")
+    all_results = process_single_image(image_path="data/query_images/IMG_8916.HEIC",collection_name=collection_name)
+    print(all_results)
 
 
 
 
 
-    '''For tomorrow :
-    So far we are able to search and get the names.
-    1. Return the search results as a list of dictionaries with the keys: id, label, score.
-    2. Multimodal Embedding for the user-clicked photo.
-    3. Supply the search results, along with the multimodal embedding to the LLM.'''
+    
+    # all_results = capture_images_from_webcam(collection_name=collection_name)
+    # for result in all_results:
+    #     for match in result['matches']:
+    #         logger.info(f"  - Person: {match.get('label', 'Unknown')}")
+    #         logger.info(f"    Score: {match.get('score', 'N/A')}")
+    # logger.info("Pipeline completed successfully! :)")
+
+    # Add this at the very end of your file, after line 209
+
+
+
+
+
+
+
+    

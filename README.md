@@ -50,6 +50,5 @@ Used for an easy front end.
 
 ## Outputs 
 ### Output from the facial detection + recognition pipeline:
-![Alt text](Screenshot 2025-10-22 at 3.38.17 PM.png)
 
-
+![Pipeline Output](Screenshot%202025-10-22%20at%203.38.17%E2%80%AFPM.png)

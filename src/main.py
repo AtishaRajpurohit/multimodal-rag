@@ -23,29 +23,29 @@ from vector_db import VectorDB
 
 
 if __name__ == "__main__":
-    logger.info("Starting the pipeline!")
-    image_path = "data/query_images/IMG_8916.HEIC"
+    # logger.info("Starting the pipeline!")
+    # image_path = "data/query_images/IMG_8916.HEIC"
 
-    #Creating an instance
-    detector = Facial_Detection(image_path)
+    # #Creating an instance
+    # detector = Facial_Detection(image_path)
 
-    #Preprocessing
-    processed_image = detector.preprocess_image(resize=(512, 512))
+    # #Preprocessing
+    # processed_image = detector.preprocess_image(resize=(512, 512))
 
-    #Facial detection
-    results = detector.facial_detection_embedding()
+    # #Facial detection
+    # results = detector.facial_detection_embedding()
 
-    #Uploading to Qdrant
-    vector_db = VectorDB()
+    # #Uploading to Qdrant
+    # vector_db = VectorDB()
 
-    logger.info(f"Creating a collection and uploading the faces to Qdrant")
-    vector_db.upload_detected_faces_to_qdrant(
-        collection_name="detected_faces_collection",
-        detected_faces_list=results,
-        image_path=image_path,
-        )
+    # logger.info(f"Creating a collection and uploading the faces to Qdrant")
+    # vector_db.upload_detected_faces_to_qdrant(
+    #     collection_name="detected_faces_collection",
+    #     detected_faces_list=results,
+    #     image_path=image_path,
+    #     )
 
-    logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")
+    # logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")
 
     # vector_db.delete_collection(collection_name="detected_faces_collection")
     

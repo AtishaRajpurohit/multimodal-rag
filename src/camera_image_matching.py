@@ -2,6 +2,7 @@ import cv2
 from deepface import DeepFace
 from qdrant_client import QdrantClient
 from loguru import logger
+import distutils as distutils
 
 client = QdrantClient(url="http://localhost:6333")
 

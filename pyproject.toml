@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "clip",
     "deepface==0.0.95",
+    "dotenv>=0.9.9",
     "facenet-pytorch>=2.5.3",
     "geopy>=2.4.1",
     "ipykernel>=6.30.1",
@@ -23,6 +24,7 @@ dependencies = [
     "pillow-heif>=0.13.0",
     "qdrant-client==1.11.3",
     "retina-face==0.0.17",
+    "setuptools>=80.9.0",
     "streamlit>=1.50.0",
     "tensorflow==2.18.0",
     "tf-keras==2.18.0",

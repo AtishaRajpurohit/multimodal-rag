@@ -1,9 +1,25 @@
 from openai import OpenAI
 from loguru import logger
 import base64
-# client = OpenAI()
+from dotenv import load_dotenv
+import json
 
-#Temporary
+#Instantiating required modules
+load_dotenv()
+client = OpenAI()
+
+
+# import cv2
+# width, height = cv2.imread("temp_image.png").shape[:2][::-1]  # [::-1] swaps width/height
+# print(f"Image size: {width}x{height}")
+
+
+#Opening Image
+image_path = "data/ref_images/IMG_5550.PNG"
+with open(image_path, "rb") as f:
+    image_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+#Temporary dataset
 data = [
   {
     "image_path": "temp_image.png",
@@ -36,7 +52,7 @@ messages = [
                 )
             },
             {
-                "type": "input_text",
+                "type": "text",
                 "text": json.dumps(data, indent=2)  # 👈 Pass your structured JSON directly
             },
             {
@@ -48,14 +64,8 @@ messages = [
 ]
 
 
-#Opening Image
-image_path = data[0]["image_path"]
-with open(image_path, "rb") as f:
-    image_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-
 response = client.chat.completions.create(
-    model="gpt-4o",     # or "gpt-4-turbo" if multimodal enabled
+    model="gpt-4o",
     messages=messages,
     max_tokens=400
 )

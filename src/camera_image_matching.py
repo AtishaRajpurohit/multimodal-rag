@@ -216,7 +216,11 @@ if __name__ == "__main__":
 
     # Add this at the very end of your file, after line 209
 
-'''Code is getting stuck with the disutils error. Come back and review'''
+'''For tomorrow :
+1. Find a way to print/ visually display the results from the matches.
+2. Update the rev_multimodal_generation.py to use the results from the matches.
+3. Add streamlit to the project.
+'''
 
 
 

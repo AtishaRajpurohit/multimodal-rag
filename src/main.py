@@ -6,6 +6,7 @@ import os
 import cv2
 from PIL import Image
 import numpy as np
+import setuptools.dist as distutils
 from deepface import DeepFace
 
 #Importing pillow-heif for HEIC support
@@ -20,6 +21,7 @@ from loguru import logger
 #Importing created modules
 from detect import Facial_Detection
 from vector_db import VectorDB
+from camera_image_matching import process_single_image,get_face_embeddings,search_similar_faces
 
 
 if __name__ == "__main__":
@@ -48,4 +50,17 @@ if __name__ == "__main__":
     # logger.info("Pipeline completed successfully! :) Check http://localhost:6333/dashboard")
 
     # vector_db.delete_collection(collection_name="detected_faces_collection")
+    # collection_name = "reference_dataset_collection"
+    # all_results = process_single_image(image_path="data/query_images/IMG_2577.JPG",collection_name=collection_name)
+    # temp = ((all_results[0]["faces"][0]))
+    # print("LENGTH OF ALL RESULTS:")
+    # print((all_results[0]["faces"]))
+
+    collection_name = "reference_dataset_collection"
+    all_results = process_single_image(
+        image_path="data/query_images/IMG_2577.JPG",
+        collection_name=collection_name)
     
+    #Pass all_results in describe_image_with_faces, after modularising rev_multimodal_generation.py
+
+    #Streamlit

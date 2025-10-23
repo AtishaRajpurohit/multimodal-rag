@@ -71,7 +71,7 @@ def describe_image_with_faces(image_path, faces, mode="humanlike"):
         prompt_text = (
             "Provide a detailed description of the scene, including what each anonymized "
             "person (PersonA, PersonB, etc.) is wearing, doing, and how they relate to "
-            "each other. Maintain order using coordinates (x, y, w, h)."
+            "each other. Maintain order and do not rename or reorder them."
         )
     else:  # humanlike
         prompt_text = (
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         caption = describe_image_with_faces(
             image_path="data/ref_images/IMG_5550.PNG",
             faces=sample_faces,
-            mode="humanlike",
+            mode="detailed",
         )
         print("\n🧾 Generated Description:\n", caption)
     except Exception as e:

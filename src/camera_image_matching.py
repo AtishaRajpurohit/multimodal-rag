@@ -1,8 +1,9 @@
 import cv2
+import setuptools.dist as distutils
 from deepface import DeepFace
 from qdrant_client import QdrantClient
 from loguru import logger
-import distutils as distutils
+
 
 client = QdrantClient(url="http://localhost:6333")
 

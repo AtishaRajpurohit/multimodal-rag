@@ -1,8 +1,8 @@
-# FaceMatch: AI-Powered Facial Recognition & Multimodal Description System
+# FaceScribe: AI-Powered Facial Recognition & Multimodal Description System
 
 ## Overview
 
-FaceMatch is a modular Python application that demonstrates how to build end-to-end facial recognition workflows using modern deep-learning and vector-database technologies. At its core, the project provides tools to:
+FaceScribe is a modular Python application that demonstrates how to build end-to-end facial recognition workflows using modern deep-learning and vector-database technologies. At its core, the project provides tools to:
 
 - **Detect and embed faces** in images
 - **Create a labelled reference dataset** of facial embeddings
@@ -54,52 +54,85 @@ The system has two main workflows:
 
 ## System Architecture
 
-The system has two independent workflows: **Reference Dataset Creation** (done once) and **Image Processing** (done for each new image). The only connection is that new images are matched against the reference dataset.
+The FaceScribe system has three main components: **User Interface**, **Reference Dataset Creation** (independent setup), and **Image Processing Pipeline** (per image). Here's how they all connect:
 
 ```mermaid
 graph TB
-    %% Reference Dataset Creation (Independent Workflow)
+    %% User Interface Layer
+    subgraph "User Interface"
+        UI[Streamlit Web App]
+        Camera[Camera Input]
+        Mode[Mode Selection<br/>humanlike/detailed/funny]
+    end
+
+    %% Reference Dataset Creation (Independent)
     subgraph "Reference Dataset Creation (One-time Setup)"
-        RDC[ReferenceDatasetCreator]
         RefImages[Reference Images]
-        Crops[Cropped Faces]
-        Label[Manual Labeling]
-        VDB[VectorDB]
-        QD[Qdrant Collection]
+        RDC[ReferenceDatasetCreator]
+        Detect[FacialDetector<br/>detect.py]
+        Crops[Cropped Faces<br/>Manual Review]
+        Labels[Manual Labeling]
+        VDB[VectorDB<br/>vector_db.py]
+        QD[Qdrant Collection<br/>reference_dataset_collection]
     end
 
-    %% Image Processing Workflow
-    subgraph "Image Processing (Per Image)"
-        NewImage[New Image]
-        FD[FacialDetector]
-        CIM[CameraImageMatcher]
-        MID[MultimodalImageDescriber]
-        Result[Generated Description]
+    %% Image Processing Pipeline
+    subgraph "Image Processing Pipeline (Per Image)"
+        NewImage[New Image from UI]
+        CIM[CameraImageMatcher<br/>camera_image_matching.py]
+        FaceDetect[Face Detection<br/>DeepFace]
+        Embed[Face Embeddings<br/>512-dim vectors]
+        Search[Vector Search<br/>Qdrant Query]
+        Match[Face Matching<br/>Labels & Scores]
+        MID[MultimodalImageDescriber<br/>rev_multimodal_generation.py]
+        OpenAI[OpenAI GPT-4o]
+        Desc[Generated Description]
     end
 
-    %% Reference dataset flow
+    %% Output
+    subgraph "Output"
+        Result[Final Result<br/>Faces + Description]
+        Display[Streamlit Display]
+    end
+
+    %% User Interface Flow
+    UI --> Camera
+    UI --> Mode
+    Camera --> NewImage
+
+    %% Reference Dataset Flow (Independent)
     RefImages --> RDC
-    RDC --> Crops
-    Crops --> Label
-    Label --> VDB
+    RDC --> Detect
+    Detect --> Crops
+    Crops --> Labels
+    Labels --> VDB
     VDB --> QD
 
-    %% Image processing flow
-    NewImage --> FD
-    FD --> CIM
-    CIM --> QD
-    QD --> CIM
-    CIM --> MID
-    MID --> Result
+    %% Image Processing Flow
+    NewImage --> CIM
+    CIM --> FaceDetect
+    FaceDetect --> Embed
+    Embed --> Search
+    Search --> QD
+    QD --> Match
+    Match --> MID
+    MID --> OpenAI
+    OpenAI --> Desc
+    Desc --> Result
+    Result --> Display
 
     %% Styling
+    classDef ui fill:#e1f5fe;
     classDef reference fill:#e8f5e9;
-    classDef processing fill:#e3f2fd;
-    classDef storage fill:#fff3e0;
+    classDef processing fill:#fff3e0;
+    classDef storage fill:#f3e5f5;
+    classDef output fill:#e0f2f1;
     
-    class RDC,RefImages,Crops,Label reference;
-    class NewImage,FD,CIM,MID,Result processing;
+    class UI,Camera,Mode ui;
+    class RefImages,RDC,Detect,Crops,Labels reference;
+    class NewImage,CIM,FaceDetect,Embed,Search,Match,MID,OpenAI,Desc processing;
     class VDB,QD storage;
+    class Result,Display output;
 ```
 
 ## Quick Start

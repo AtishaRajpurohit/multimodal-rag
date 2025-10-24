@@ -57,82 +57,76 @@ The system has two main workflows:
 The FaceScribe system has three main components: **User Interface**, **Reference Dataset Creation** (independent setup), and **Image Processing Pipeline** (per image). Here's how they all connect:
 
 ```mermaid
-graph TB
-    %% User Interface Layer
-    subgraph "User Interface"
-        UI[Streamlit Web App]
-        Camera[Camera Input]
-        Mode[Mode Selection<br/>humanlike/detailed/funny]
+graph LR
+    %% User Interface
+    subgraph UI["User Interface"]
+        A[Streamlit App]
+        B[Camera Input]
+        C[Mode Selection]
     end
 
-    %% Reference Dataset Creation (Independent)
-    subgraph "Reference Dataset Creation (One-time Setup)"
-        RefImages[Reference Images]
-        RDC[ReferenceDatasetCreator]
-        Detect[FacialDetector<br/>detect.py]
-        Crops[Cropped Faces<br/>Manual Review]
-        Labels[Manual Labeling]
-        VDB[VectorDB<br/>vector_db.py]
-        QD[Qdrant Collection<br/>reference_dataset_collection]
+    %% Reference Dataset (Independent)
+    subgraph REF["Reference Dataset Creation"]
+        D[Reference Images]
+        E[FacialDetector<br/>detect.py]
+        F[Cropped Faces]
+        G[Manual Labels]
+        H[VectorDB<br/>vector_db.py]
+        I[Qdrant Collection]
     end
 
-    %% Image Processing Pipeline
-    subgraph "Image Processing Pipeline (Per Image)"
-        NewImage[New Image from UI]
-        CIM[CameraImageMatcher<br/>camera_image_matching.py]
-        FaceDetect[Face Detection<br/>DeepFace]
-        Embed[Face Embeddings<br/>512-dim vectors]
-        Search[Vector Search<br/>Qdrant Query]
-        Match[Face Matching<br/>Labels & Scores]
-        MID[MultimodalImageDescriber<br/>rev_multimodal_generation.py]
-        OpenAI[OpenAI GPT-4o]
-        Desc[Generated Description]
+    %% Processing Pipeline
+    subgraph PROC["Image Processing Pipeline"]
+        J[New Image]
+        K[CameraImageMatcher<br/>camera_image_matching.py]
+        L[Face Detection]
+        M[Face Embeddings]
+        N[Vector Search]
+        O[Face Matching]
+        P[MultimodalImageDescriber<br/>rev_multimodal_generation.py]
+        Q[OpenAI GPT-4o]
+        R[Description]
     end
 
     %% Output
-    subgraph "Output"
-        Result[Final Result<br/>Faces + Description]
-        Display[Streamlit Display]
+    subgraph OUT["Output"]
+        S[Final Result]
+        T[Streamlit Display]
     end
 
-    %% User Interface Flow
-    UI --> Camera
-    UI --> Mode
-    Camera --> NewImage
-
-    %% Reference Dataset Flow (Independent)
-    RefImages --> RDC
-    RDC --> Detect
-    Detect --> Crops
-    Crops --> Labels
-    Labels --> VDB
-    VDB --> QD
-
-    %% Image Processing Flow
-    NewImage --> CIM
-    CIM --> FaceDetect
-    FaceDetect --> Embed
-    Embed --> Search
-    Search --> QD
-    QD --> Match
-    Match --> MID
-    MID --> OpenAI
-    OpenAI --> Desc
-    Desc --> Result
-    Result --> Display
+    %% Flows
+    A --> B
+    A --> C
+    B --> J
+    
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> I
+    I --> O
+    O --> P
+    P --> Q
+    Q --> R
+    R --> S
+    S --> T
 
     %% Styling
-    classDef ui fill:#e1f5fe;
-    classDef reference fill:#e8f5e9;
-    classDef processing fill:#fff3e0;
-    classDef storage fill:#f3e5f5;
-    classDef output fill:#e0f2f1;
+    classDef ui fill:#e1f5fe
+    classDef ref fill:#e8f5e9
+    classDef proc fill:#fff3e0
+    classDef out fill:#e0f2f1
     
-    class UI,Camera,Mode ui;
-    class RefImages,RDC,Detect,Crops,Labels reference;
-    class NewImage,CIM,FaceDetect,Embed,Search,Match,MID,OpenAI,Desc processing;
-    class VDB,QD storage;
-    class Result,Display output;
+    class A,B,C ui
+    class D,E,F,G,H,I ref
+    class J,K,L,M,N,O,P,Q,R proc
+    class S,T out
 ```
 
 ## Quick Start

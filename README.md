@@ -57,7 +57,7 @@ The system has two main workflows:
 The FaceScribe system has three main components: **User Interface**, **Reference Dataset Creation** (independent setup), and **Image Processing Pipeline** (per image). Here's how they all connect:
 
 ```mermaid
-graph LR
+graph TB
     %% User Interface
     subgraph UI["User Interface"]
         A[Streamlit App]
@@ -68,22 +68,22 @@ graph LR
     %% Reference Dataset (Independent)
     subgraph REF["Reference Dataset Creation"]
         D[Reference Images]
-        E[FacialDetector<br/>detect.py]
+        E[FacialDetector]
         F[Cropped Faces]
         G[Manual Labels]
-        H[VectorDB<br/>vector_db.py]
+        H[VectorDB]
         I[Qdrant Collection]
     end
 
     %% Processing Pipeline
     subgraph PROC["Image Processing Pipeline"]
         J[New Image]
-        K[CameraImageMatcher<br/>camera_image_matching.py]
+        K[CameraImageMatcher]
         L[Face Detection]
         M[Face Embeddings]
         N[Vector Search]
         O[Face Matching]
-        P[MultimodalImageDescriber<br/>rev_multimodal_generation.py]
+        P[MultimodalImageDescriber]
         Q[OpenAI GPT-4o]
         R[Description]
     end

@@ -28,9 +28,9 @@ from pillow_heif import register_heif_opener
 register_heif_opener()
 
 # Import our custom modules
-from camera_image_matching import CameraImageMatcher
-from rev_multimodal_generation import MultimodalImageDescriber
-from reference_dataset_creation import ReferenceDatasetCreator
+from .camera_image_matching import CameraImageMatcher
+from .rev_multimodal_generation import MultimodalImageDescriber
+from .reference_dataset_creation import ReferenceDatasetCreator
 
 # =============================================================================
 # CONFIGURATION
@@ -201,11 +201,16 @@ def process_image_pipeline(
         # STEP 3: Generate multimodal description
         # =====================================================================
         logger.info("Generating multimodal description...")
-        description = describer.describe_image_with_faces(
-            image_path=image_path,
-            faces=faces,
-            mode=description_mode
-        )
+        try:
+            description = describer.describe_image_with_faces(
+                image_path=image_path,
+                faces=faces,
+                mode=description_mode
+            )
+            logger.info(f"Description generated successfully: {len(description)} characters")
+        except Exception as e:
+            logger.error(f"Error generating description: {e}")
+            description = f"Error generating description: {str(e)}"
         
         # =====================================================================
         # STEP 4: Return results

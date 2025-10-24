@@ -197,7 +197,7 @@ class MultimodalImageDescriber:
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
     # Import the face detection function
-    from camera_image_matching import process_single_image
+    from .camera_image_matching import CameraImageMatcher
     
     # Initialize the describer
     describer = MultimodalImageDescriber()
@@ -208,7 +208,8 @@ if __name__ == "__main__":
         collection_name = "reference_dataset_collection"
         
         logger.info(f"Processing image: {image_path}")
-        all_results = process_single_image(image_path=image_path, collection_name=collection_name)
+        matcher = CameraImageMatcher()
+        all_results = matcher.process_single_image(image_path=image_path, collection_name=collection_name)
         
         # Extract faces from the results
         if all_results and len(all_results) > 0:

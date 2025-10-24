@@ -13,8 +13,8 @@ from pillow_heif import register_heif_opener
 # Register HEIF opener
 register_heif_opener()
 
-from detect import FacialDetector
-from vector_db import VectorDB
+from .detect import FacialDetector
+from .vector_db import VectorDB
 
 
 class ReferenceDatasetCreator:

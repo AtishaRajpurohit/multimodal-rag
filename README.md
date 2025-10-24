@@ -13,172 +13,167 @@ By following the steps in this repository you can construct a reusable reference
 
 ## Core Features
 
-### 🧠 Advanced Face Detection & Embedding
+### 🧠 Face Detection & Recognition
+- Supports multiple image formats (JPEG, PNG, HEIC, etc.)
+- Uses DeepFace for accurate face detection and 512-dimensional embeddings
+- Automatic image preprocessing and format conversion
 
-- **Flexible format support**: The FacialDetector class can read JPEG, PNG, BMP, TIFF, WebP, HEIC and HEIF images; it transparently converts high-efficiency formats to RGB/BGR for processing
-- **Preprocessing pipeline**: Images are resized and converted on the fly ensuring consistent input to the deep-learning models
-- **DeepFace integration**: The DeepFace library is used to detect faces and extract 512-dimensional embeddings
+### 📦 Reference Dataset Builder
+- Two-step process: extract faces, then label and upload
+- Saves cropped faces for manual review and labeling
+- Uploads labeled embeddings to Qdrant for matching
 
-### 📦 Reference Dataset Creation
+### 🗃️ Vector Database
+- Qdrant integration for fast similarity search
+- Stores face embeddings with metadata (labels, confidence, coordinates)
+- Easy collection management and querying
 
-- **Two-phase workflow**: The ReferenceDatasetCreator guides you through cropping faces from raw images (phase 1) and then uploading the associated embeddings with labels to Qdrant (phase 2)
-- **Automatic cropping**: Each detected face is saved as a separate image in `data/reference_images_faces`, allowing you to review and assign real-world names or labels
-- **Labelled uploads**: Once labelled, embeddings and metadata are uploaded to a named Qdrant collection so that subsequent queries can return meaningful matches
+### 🎨 AI-Powered Descriptions
+- Privacy-preserving: anonymizes faces before sending to OpenAI
+- Multiple modes: humanlike, detailed, or funny descriptions
+- Uses GPT-4o for natural language generation
 
-### 🗃️ Vector Database Integration
-
-- **Qdrant client**: A dedicated VectorDB class manages the connection to your local or remote Qdrant server. It can create and delete collections, upsert embeddings and associated payloads, and validate collection parameters
-- **Payload-rich points**: Each stored vector includes the facial bounding box, detection confidence, image path and the user-provided label. This makes it possible to filter and display results in downstream applications
-
-### 🎨 Privacy-Preserving Multimodal Generation
-
-- **Anonymized metadata**: The MultimodalImageDescriber anonymizes each detected face with placeholders (e.g., PersonA, PersonB) before sending the request to OpenAI. A mapping between placeholders and real names is maintained locally so that the final caption can be de-anonymized after the model responds
-- **Multiple description modes**: Choose between humanlike, detailed or funny prompts. Humanlike mode yields a natural description of the scene; detailed mode emphasizes clothing and relationships; funny mode produces light-hearted commentary
-- **OpenAI GPT-4o integration**: Uses the chat.completions API of GPT-4o to generate coherent paragraphs that reference detected faces without violating privacy
-
-### 🧩 Modular Design
-
-- **Clean separation of concerns**: Each major functionality lives in its own class (FacialDetector, ReferenceDatasetCreator, VectorDB, MultimodalImageDescriber), making the code base easy to test and extend
-- **Extensible workflows**: You can plug in your own matching algorithm or user interface on top of these components. For example, a CameraImageMatcher module combines the detector and vector-database layers to match faces in a live feed
+### 🧩 Modular Architecture
+- Clean, object-oriented design
+- Easy to extend and customize
+- Separate components for detection, matching, and generation
 
 ## Architecture
 
-FaceMatch implements a layered architecture that divides image processing, data management and generative AI responsibilities. The core layers are:
+The system has two main workflows:
 
-1. **Preprocessing & Detection Layer** – Handles image loading, conversion and face detection. Built on OpenCV, Pillow and DeepFace
-2. **Dataset Creation Layer** – Splits images into cropped faces, associates them with user-provided labels and uploads embeddings to Qdrant. Implemented in `reference_dataset_creation.py` using ReferenceDatasetCreator and VectorDB
-3. **Vector Database Layer** – Manages the Qdrant connection and encapsulates collection operations. Implemented in `vector_db.py`
-4. **Matching Layer** – Matches new embeddings against the reference collection to find the closest identities. Implemented in `camera_image_matching.py`
-5. **Multimodal Generation Layer** – Uses OpenAI GPT-4o to produce textual descriptions given an image and detected face metadata. The MultimodalImageDescriber encapsulates prompt engineering, image encoding and post-processing
+1. **Reference Dataset Creation** (one-time setup)
+   - Extract faces from reference images
+   - Manual labeling of cropped faces
+   - Upload labeled embeddings to Qdrant
+
+2. **Image Processing** (for each new image)
+   - Detect faces in new images
+   - Match against reference dataset
+   - Generate AI descriptions
 
 ## System Architecture
 
-Below is a high-level diagram describing how the components interact. It reflects the two primary workflows: building a reference dataset and generating a description for a new image.
+The system has two independent workflows: **Reference Dataset Creation** (done once) and **Image Processing** (done for each new image). The only connection is that new images are matched against the reference dataset.
 
 ```mermaid
 graph TB
-    %% Input and pre-processing
-    subgraph "User Input"
-        U[User / Script]
-        I[Image Files]
-    end
-
-    subgraph "Preprocessing & Detection"
-        FD[FacialDetector<br/>DeepFace & OpenCV]
-    end
-
-    subgraph "Dataset Creation"
-        Crops[Cropped Faces]
-        Label[User Labeling]
+    %% Reference Dataset Creation (Independent Workflow)
+    subgraph "Reference Dataset Creation (One-time Setup)"
         RDC[ReferenceDatasetCreator]
-    end
-
-    subgraph "Vector Storage"
-        VDB[VectorDB<br/>Qdrant Client]
+        RefImages[Reference Images]
+        Crops[Cropped Faces]
+        Label[Manual Labeling]
+        VDB[VectorDB]
         QD[Qdrant Collection]
     end
 
-    subgraph "Matching & Generation"
+    %% Image Processing Workflow
+    subgraph "Image Processing (Per Image)"
+        NewImage[New Image]
+        FD[FacialDetector]
         CIM[CameraImageMatcher]
-        MID[MultimodalImageDescriber<br/>OpenAI GPT-4o]
+        MID[MultimodalImageDescriber]
+        Result[Generated Description]
     end
 
-    %% Data flows for dataset creation
-    U --> I --> FD
-    FD --> Crops
+    %% Reference dataset flow
+    RefImages --> RDC
+    RDC --> Crops
     Crops --> Label
-    Label --> RDC
-    RDC --> VDB
+    Label --> VDB
     VDB --> QD
 
-    %% Data flows for caption generation
-    I -. New Image .- FD
-    FD -. Embeddings .- CIM
-    CIM -. Matches .- VDB
-    VDB -. Results .- MID
-    U -. Select Mode & API Key .- MID
-    MID -. Generated Caption .- U
+    %% Image processing flow
+    NewImage --> FD
+    FD --> CIM
+    CIM --> QD
+    QD --> CIM
+    CIM --> MID
+    MID --> Result
 
-    classDef processing fill:#e8f5e9;
-    classDef storage fill:#e3f2fd;
-    classDef matching fill:#fff3e0;
-    class FD,Crops,RDC,VDB,QD processing;
-    class MID storage;
-    class CIM matching;
+    %% Styling
+    classDef reference fill:#e8f5e9;
+    classDef processing fill:#e3f2fd;
+    classDef storage fill:#fff3e0;
+    
+    class RDC,RefImages,Crops,Label reference;
+    class NewImage,FD,CIM,MID,Result processing;
+    class VDB,QD storage;
 ```
 
-## Getting Started
+## Quick Start
 
-The following steps will allow you to run FaceMatch end to end. These instructions assume you have Python 3.9 or higher installed and that you are familiar with running commands in a terminal.
+### Prerequisites
+- Python 3.9+
+- Docker (for Qdrant)
+- OpenAI API key
 
-### 1. Install Dependencies
-
-Clone the repository (if you haven't already) and create a virtual environment. Then install the required Python packages:
+### 1. Setup Environment
 
 ```bash
+# Clone and setup
+git clone <your-repo-url>
+cd multimodal-rag
+
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
-pip install --upgrade pip
-pip install -r requirements.txt  # Includes deepface, qdrant-client, pillow-heif, loguru, openai
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -e .
 ```
 
-### 2. Start a Qdrant Server
-
-Face embeddings are stored in a Qdrant vector database. You can run Qdrant locally using Docker:
+### 2. Start Qdrant Database
 
 ```bash
+# Start Qdrant with Docker
 docker run -p 6333:6333 -p 6334:6334 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
+
+# Verify it's running
+curl http://localhost:6333/collections
 ```
 
-Once running, the Qdrant dashboard is available at http://localhost:6333/dashboard where you can inspect your collections.
-
-### 3. Configure OpenAI Credentials
-
-The MultimodalImageDescriber uses OpenAI's GPT-4o. Create a `.env` file in the project root and add your API key:
+### 3. Configure API Keys
 
 ```bash
-OPENAI_API_KEY=sk-your-api-key
+# Create environment file
+cp .env.example .env
+
+# Edit .env and add your OpenAI API key
+# OPENAI_API_KEY=sk-your-actual-api-key-here
 ```
 
-You can also pass the key programmatically when instantiating `MultimodalImageDescriber(api_key="…")`.
-
-### 4. Phase 1 – Extract and Crop Faces
-
-Place the images you want to include in your reference dataset in `data/query_images/`. Then run the reference_dataset_creation.py script:
+### 4. Build Reference Dataset (One-time Setup)
 
 ```bash
+# Add your reference images to data/query_images/
+# Then run the dataset creation script
 python src/reference_dataset_creation.py
 ```
 
-During phase 1 the script will detect faces in each image, crop them and save them to `data/reference_images_faces/`. It logs how many faces were detected per image so you can prepare labels. Open the cropped images to verify the faces and decide which name corresponds to each crop.
+This will:
+- Extract faces from your images
+- Save cropped faces to `data/reference_images_faces/`
+- Show you how many faces were detected per image
+- Wait for you to add labels, then upload to Qdrant
 
-### 5. Phase 2 – Label and Upload
+### 5. Run the Application
 
-After reviewing the cropped faces, edit the `all_labels` list in `reference_dataset_creation.py` so that each entry corresponds to a detected face. The order of labels must match the order DeepFace returns faces (top-to-bottom, left-to-right). Then re-run the script again; it will embed each face and upload the vectors and labels to the Qdrant collection specified in `collection_name`.
-
-### 6. Run the Complete Pipeline
-
-Use the main pipeline to process images end-to-end:
-
+**Option A: Command Line**
 ```bash
 python src/main.py
 ```
 
-This will run the complete face detection, matching, and description generation pipeline.
-
-### 7. Streamlit Web Interface
-
-Launch the interactive web interface:
-
+**Option B: Web Interface**
 ```bash
 streamlit run app.py
 ```
 
-This provides a user-friendly interface for:
-- Taking photos with your camera
-- Selecting description modes (humanlike, detailed, funny)
-- Viewing face detection results
-- Reading AI-generated descriptions
+The web interface lets you:
+- Take photos with your camera
+- Choose description style (humanlike/detailed/funny)
+- See detected faces and AI-generated descriptions
 
 ## Implementation Status
 

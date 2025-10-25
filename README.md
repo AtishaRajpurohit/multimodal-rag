@@ -148,7 +148,7 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -e .
+uv sync
 ```
 
 ### 2. Start Qdrant Database

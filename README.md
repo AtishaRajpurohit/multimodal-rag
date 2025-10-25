@@ -29,9 +29,14 @@ By following the steps in this repository you can construct a reusable reference
 - Easy collection management and querying
 
 ### 🎨 AI-Powered Descriptions
-- Privacy-preserving: anonymizes faces before sending to OpenAI
+- Prompt Engineering: detailed prompts for different generation modes of generation
 - Multiple modes: humanlike, detailed, or funny descriptions
 - Uses GPT-4o for natural language generation
+
+### Privacy Preserving Multimodal Generation
+- Anonmymised Hashmap of Metadata Created
+- No Names are sent into OpenAI LLM
+- Deanonymisation after output is generation
 
 ### 🧩 Modular Architecture
 - Clean, object-oriented design
